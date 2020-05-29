@@ -11,7 +11,7 @@ def plot_barchar_riego(xvalues, yvalues, partida=""):
             'weight': 'normal',
             'size': 16,
             }
-    bar_chart = pygal.Bar(title="Riego en la última semana en {}".format(partida.iloc[0, 1]))
+    bar_chart = pygal.Bar(title="{}".format(partida.iloc[0, 1]), margin_right=50)
 
     bar_chart.x_labels = xvalues
     bar_chart.add("Litros", yvalues)
@@ -31,7 +31,7 @@ def dibujar(usuario):
 
     # dibujar los graficos de las parcelas del usuario dado
     for parcela in lista_parcelas:
-        nombrecsv = "{}.csv".format(parcela.partida)
+        nombrecsv = "{}.csv".format(parcela)
         litros = pd.read_csv(nombrecsv)
         litros = litros.drop(['L. inicial', 'L. final'], axis=1)
 
@@ -49,4 +49,4 @@ def dibujar(usuario):
                            litros_ultima_semana['Total'],
                            datos_parcelas[datos_parcelas['filename'].str.contains(nombrecsv.split('.')[0])])
 
-
+    return lista_parcelas

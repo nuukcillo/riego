@@ -13,14 +13,14 @@ def home():
     usuarios = pd.read_csv("userpass.tsv", sep="\t", header=None, names=['user', 'psswd', 'name'])
     nombre_usuarios = usuarios['name'].tolist()
     id_usuarios = usuarios['user'].tolist()
-    return render_template('index.html', users_name=nombre_usuarios, users_len=len(nombre_usuarios), users_id=id_usuarios )
+    return render_template('index.html', users_name=nombre_usuarios, users_len=len(nombre_usuarios), users_id=id_usuarios)
 
 
-@app.route('gente/<people>')
+@app.route('/gente/<people>')
 def gente(people):
-    parcelas = plotpygal.dibujar(people)
+    parcelas_ret = plotpygal.dibujar(people)
 
-    return render_template('bar.html', parcelas=parcelas)
+    return render_template('bar.html', parcelas=parcelas_ret, num_parcelas=len(parcelas_ret))
 
 
 # @app.route("/bar")

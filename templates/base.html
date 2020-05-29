@@ -5,28 +5,9 @@
 <body>
 {% include 'header.html' %}
 <main>
-  <div class="section" id="index-banner">
-    <div class="container">
-      <br><br>
-      <h1 class="header center black-text">Plan de riego</h1>
-      <div class="row center">
-        <h5 class="header col s12 light">Ver plan de riego de los usuarios</h5>
-      </div>
-      <br><br>
-      <div class="row center">
+  {% block content %}
 
-      {% for i in range(0,users_len) %}
-        <div class="col s12 m4">
-          <a href="/gente/{{  users_id[i] }}" id="{{users_id[i]}}-button" class="btn-large waves-effect waves-light teal darken-3">{{ users_name[i] }}</a>
-        </div>
-      {% endfor %}
-
-      </div>
-
-      <br><br>
-
-    </div>
-  </div>
+  {% endblock %}
 
 </main>
   <footer class="page-footer blue-grey darken-4">

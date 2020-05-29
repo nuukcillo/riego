@@ -1,18 +1,18 @@
-<!DOCTYPE html>
-<html lang="en">
-{% include 'cabeceras.html' %}
+{% extends "base.html" %}
 
-<body>
+  {% block content %}
+<div class="">
+    <div class="row">
+        <h2>Riegos en los últimos días</h2>
+    </div>
+    <div class="row">
 
-</main>
-         <div class="container">
-             <object type="image/svg+xml" data="{{image_url}}">
-              Your browser does not support SVG
-             </object>
-         </div>
+        {% for i in range(0,num_parcelas) %}
 
-
-</body>
-{% include 'cabeceras.html' %}
-
-</html>
+            <div class="col s12 m6 l6 ">
+                <embed type="image/svg+xml" src= "/static/images/{{ parcelas[i]}}.svg" />
+            </div>
+        {% endfor %}
+    </div>
+</div>
+  {% endblock %}
