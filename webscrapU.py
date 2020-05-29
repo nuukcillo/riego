@@ -17,11 +17,11 @@ BASE_URL = "http://tarragon.gootem.com/index.php?lang=en&page=historial_riego&id
 
 def get_dataframe_filtered_by_user(dataframe, user):
     inicial = ""
-    if user.user == "marcocerveraborja":
+    if user == "marcocerveraborja":
         inicial = "B"
-    elif user.user == "marcozanonteofilo":
+    elif user == "marcozanonteofilo":
         inicial = "F"
-    elif user.user == "isaac":
+    elif user == "isaac":
         inicial = "I"
     try:
         return dataframe.loc[dataframe['user'] == inicial].drop(['user'], axis=1)
@@ -40,7 +40,7 @@ def main():
         contadores = pd.read_csv("contadores.tsv", sep="\t", header=None, names=['user', 'partida', 'contador'])
 
         # por cada usuario hac
-        usuarios = pd.read_csv("userpass.tsv", sep="\t", header=None, names=['user', 'psswd'])
+        usuarios = pd.read_csv("userpass.tsv", sep="\t", header=None, names=['user', 'psswd', 'name'])
     except:
         logging.error("Error leyendo ficheros de configuración")
         sys.exit(1)
@@ -61,6 +61,7 @@ def main():
         # Crear Sesion
         session_requests = requests.session()
 
+        # TODO Sacar las llamadas a request a una funcion
         try:
             # Get login csrf token
             result = session_requests.get(LOGIN_URL)
@@ -92,7 +93,7 @@ def main():
         except requests.exceptions.RequestException as err:
             logging.exception("Error")
 
-        for campo in get_dataframe_filtered_by_user(contadores, usuario).itertuples():
+        for campo in get_dataframe_filtered_by_user(contadores, usuario.user).itertuples():
 
             # Si es dia 1 se archiva el csv
             nombrecsv = campo.partida + ".csv"
