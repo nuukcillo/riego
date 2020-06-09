@@ -1,17 +1,23 @@
 import pandas as pd
 import pygal
 from webscrapU import get_dataframe_filtered_by_user
-
+from pygal.style import Style
 
 # dibuja un grafico de barras con los valores datos
 def plot_barchar_riego(xvalues, yvalues, partida=""):
     # fuente
-    font = {'family': 'serif',
-            'color': 'darkred',
-            'weight': 'normal',
-            'size': 16,
-            }
-    bar_chart = pygal.Bar(title="{}".format(partida.iloc[0, 1]), margin_right=50)
+    estilo = Style(background='transparent',
+
+                   value_colors=('white',),
+
+                   value_font_family='googlefont:Raleway',
+                   title_font_size=50,
+                   label_font_size=30,
+                   major_label_font_size=30,
+                   tooltip_font_size=30,
+                   font_family='googlefont:Raleway')
+    bar_chart = pygal.Bar(title="{}".format(partida.iloc[0, 1]), margin_right=50, x_label_rotation=20,
+                          show_legend=False, style=estilo,  print_values=True, print_zeroes=False)
 
     bar_chart.x_labels = xvalues
     bar_chart.add("Litros", yvalues)
