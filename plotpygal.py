@@ -2,14 +2,15 @@ import pandas as pd
 import pygal
 from webscrapU import get_dataframe_filtered_by_user
 from pygal.style import Style
-
+import random
 # dibuja un grafico de barras con los valores datos
 def plot_barchar_riego(xvalues, yvalues, partida=""):
     # fuente
+    colores = ['#563f46', '#80ced6', '#618685', '#36486b']
     estilo = Style(background='transparent',
 
                    value_colors=('white',),
-
+                   colors=[colores[random.randint(0, 3)]] * len(xvalues),
                    value_font_family='googlefont:Raleway',
                    title_font_size=50,
                    label_font_size=30,
@@ -27,7 +28,7 @@ def plot_barchar_riego(xvalues, yvalues, partida=""):
 
 def dibujar(usuario):
     # leer y filtrar parcelas por usuario
-    parcelas = pd.read_csv("contadores.tsv", sep="\t", header=None, names=['user', 'partida', 'contador'])
+    parcelas = pd.read_csv("contadores.tsv", sep="\t", header=None, names=['user', 'partida', 'contador', 'hanegadas'])
     parcelas_usuario = get_dataframe_filtered_by_user(parcelas, usuario)
 
     # leer csv para escribir el nombre bueno de la parcela en el grafico

@@ -10,7 +10,7 @@
         {% for i in range(0,num_parcelas) %}
 
             <div class="col s12 m6 l6 ">
-                <embed type="image/svg+xml" src= "/static/images/{{ parcelas[i]}}.svg" />
+                <embed type="image/svg+xml" src= "/static/images/{{ parcelas[i]}}.svg?cache={{ cache }}" />
             </div>
         {% endfor %}
     </div>

@@ -20,7 +20,7 @@ def home():
 def gente(people):
     parcelas_ret = plotpygal.dibujar(people)
 
-    return render_template('bar.html', parcelas=parcelas_ret, num_parcelas=len(parcelas_ret))
+    return render_template('bar.html', parcelas=parcelas_ret, num_parcelas=len(parcelas_ret), cache=str(time.time()))
 
 
 # @app.route("/bar")

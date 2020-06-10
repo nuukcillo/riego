@@ -37,7 +37,7 @@ def main():
     logging.info("Empezando")
     try:
         # Leemos los contadores
-        contadores = pd.read_csv("contadores.tsv", sep="\t", header=None, names=['user', 'partida', 'contador'])
+        contadores = pd.read_csv("contadores.tsv", sep="\t", header=None, names=['user', 'partida', 'contador', 'hanegadas'])
 
         # por cada usuario hac
         usuarios = pd.read_csv("userpass.tsv", sep="\t", header=None, names=['user', 'psswd', 'name'])
