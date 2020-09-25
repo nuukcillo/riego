@@ -1,12 +1,25 @@
  <nav class="blue-grey darken-4" role="navigation">
-    <div class="nav-wrapper container"><a id="logo-container" href="/" class="brand-logo">H</a>
+    <div class="nav-wrapper container"><a id="logo-container" href="/" class="brand-logo">Inicio</a>
       <ul class="right hide-on-med-and-down">
-        <li><a href="#">Navbar Link</a></li>
+
+          {% if is_logged_in() %}
+              <li><a href="#">Bienvenido, {{get_username()}}</a></li>
+              <li><a href="/logout">Salir</a></li>
+          {% else %}
+            <li><a href="/login">Acceder</a></li>
+          {% endif %}
       </ul>
 
       <ul id="nav-mobile" class="sidenav">
-        <li><a href="#">Navbar Link</a></li>
+          <li><a href="/index">Inicio</a></li>
+          {% if is_logged_in() %}
+              <li><a href="#">{{get_username()}}</a></li>
+              <li><a href="/logout">Salir</a></li>
+          {% else %}
+            <li><a href="/login">Acceder</a></li>
+          {% endif %}
+
       </ul>
-      <a href="#" data-target="nav-mobile" class="sidenav-trigger"><i class="material-icons">menu</i></a>
+      <a href="#" data-target="nav-mobile" class="sidenav-trigger"><i class="material-icons">Menu</i></a>
     </div>
   </nav>

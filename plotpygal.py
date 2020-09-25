@@ -5,11 +5,14 @@ from pygal.style import Style
 import random
 # dibuja un grafico de barras con los valores datos
 def plot_barchar_riego(xvalues, yvalues, partida=""):
-    # fuente
+    # colores de los graficos
     colores = ['#563f46', '#80ced6', '#618685', '#36486b']
+
+    #estilo del gráfico
     estilo = Style(background='transparent',
 
                    value_colors=('white',),
+                   #escoger un color aleatorio para las barras
                    colors=[colores[random.randint(0, 3)]] * len(xvalues),
                    value_font_family='googlefont:Raleway',
                    title_font_size=50,
@@ -17,6 +20,7 @@ def plot_barchar_riego(xvalues, yvalues, partida=""):
                    major_label_font_size=30,
                    tooltip_font_size=30,
                    font_family='googlefont:Raleway')
+
     bar_chart = pygal.Bar(title="{}".format(partida.iloc[0, 1]), margin_right=50, x_label_rotation=20,
                           show_legend=False, style=estilo,  print_values=True, print_zeroes=False)
 
@@ -49,8 +53,6 @@ def dibujar(usuario):
         # litros['Semana'] = litros['Inicio'].apply(check_if_current_week)
 
         litros_ultima_semana = litros.tail(7)
-
-        datos_parcelas = pd.read_csv("datos_parcelas.tsv", delimiter="\t")
 
         plot_barchar_riego(litros_ultima_semana['Inicio'].apply(lambda x: x.strftime('%d/%b')),
                            litros_ultima_semana['Total'],
