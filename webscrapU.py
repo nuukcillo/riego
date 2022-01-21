@@ -10,9 +10,10 @@ import shutil
 import sys
 from bs4 import BeautifulSoup
 
-LOGIN_URL = "http://tarragon.gootem.com/autentica.html"
-LOGOUT_URL = "http://tarragon.gootem.com/logout.html"
-BASE_URL = "http://tarragon.gootem.com/index.php?lang=en&page=historial_riego&idContador={0}&mes=F{1}"
+LOGIN_URL = "https://tarragon.gootem.com/autentica.html"
+LOGIN_URL_REF = "https://tarragon.gootem.com/login.html"
+LOGOUT_URL = "https://tarragon.gootem.com/logout.html"
+BASE_URL = "https://tarragon.gootem.com/index.php?lang=en&page=historial_riego&idContador={0}&mes=F{1}"
 
 
 def get_dataframe_filtered_by_user(dataframe, user):
@@ -31,13 +32,15 @@ def get_dataframe_filtered_by_user(dataframe, user):
 
 
 def main():
-    logging.basicConfig(filename="{}.log".format(os.path.basename(__file__).split('.')[0]),
-                        format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p', filemode="a")
-
+    log_filename = "{}.log".format(os.path.basename(__file__).split('.')[0])
+    logging.basicConfig(filename=log_filename, format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p',
+                        filemode="w+", level=logging.DEBUG)
+   # handler = logging.FileHandler(log_filename, 'w+')
     logging.info("Empezando")
     try:
         # Leemos los contadores
-        contadores = pd.read_csv("contadores.tsv", sep="\t", header=None, names=['user', 'partida', 'contador', 'hanegadas'])
+        contadores = pd.read_csv("contadores.tsv", sep="\t",
+                                 header=None, names=['user', 'partida', 'contador', 'hanegadas'])
 
         # por cada usuario hac
         usuarios = pd.read_csv("userpass.tsv", sep="\t", header=None, names=['user', 'psswd', 'name'])
@@ -59,7 +62,7 @@ def main():
     for usuario in usuarios.itertuples():
 
         # Crear Sesion
-        session_requests = requests.session()
+        session_requests = requests.Session()
 
         # TODO Sacar las llamadas a request a una funcion
         try:
@@ -82,8 +85,9 @@ def main():
         }
         try:
             # Perform login
-            result = session_requests.post(LOGIN_URL, data=payload, headers=dict(referer=LOGIN_URL))
+            result = session_requests.post(LOGIN_URL, data=payload, headers=dict(referer=LOGIN_URL_REF))
             result.raise_for_status()
+
         except requests.exceptions.HTTPError as errh:
             logging.exception("Error HTTP: {0}".format(errh.response.status_code))
         except requests.exceptions.ConnectionError as errc:

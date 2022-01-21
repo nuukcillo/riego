@@ -9,12 +9,11 @@ import riegosemanal
 
 from config import Config
 
-
-
 app = Flask(__name__)
 
 app.config.from_object(Config)
 SimpleLogin(app)
+
 
 @app.route("/")
 @app.route("/index")
@@ -49,6 +48,7 @@ def riego():
     return render_template('riego.html', tabla=litros_semanales.to_html(classes="responsible-table striped",
                                                                         index_names=False, index=False, justify='center'
                                                                         ))
+
 
 if __name__ == "__main__":
     app.run()
