@@ -1,18 +1,16 @@
 {% extends "base.html" %}
 
-  {% block content %}
-<div class="">
+{% block content %}
+<div class="container">
     <div class="row center">
         <h1>Riegos en los últimos 7 días</h1>
     </div>
     <div class="row">
-
-        {% for i in range(0,num_parcelas) %}
-
-            <div class="col s12 m6 l6 ">
-                <embed type="image/svg+xml" src= "/static/images/{{ parcelas[i]}}.svg?cache={{ cache }}" />
+        {% for i in range(0, num_parcelas) %}
+            <div class="col s12 m4 l4">
+                <embed type="image/svg+xml" src="/static/images/{{ parcelas[i] }}?cache={{ cache }}" />
             </div>
         {% endfor %}
     </div>
 </div>
-  {% endblock %}
+{% endblock %}

@@ -1,11 +1,5 @@
-/userpass.tsv
-/contadores.tsv
-/webscrap.py
-/webscrap_isc.py
-/webscrap_fil.py
-/patiodejuegos.py
 *.csv
-
+static/images/*.svg
 # Created by https://www.toptal.com/developers/gitignore/api/python,flask
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,flask
 

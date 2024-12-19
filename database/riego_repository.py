@@ -15,3 +15,23 @@ def load_data():
 
     conn.close()
     return counters, users
+
+def obtener_inicial(usuario):
+    # Conectar a la base de datos SQLite
+    conn = sqlite3.connect(get_db_path())  # Reemplaza con el nombre de tu base de datos
+    cursor = conn.cursor()
+
+    # Consultar la inicial del usuario
+    cursor.execute('''
+        SELECT inicial FROM users WHERE user = ?
+    ''', (usuario,))
+
+    # Obtener el resultado
+    resultado = cursor.fetchone()
+    conn.close()
+
+    # Si se encuentra el usuario, devolver la inicial
+    if resultado:
+        return resultado[0]
+    else:
+        return None  # Usuario no encontrado

@@ -4,8 +4,11 @@ from database.riego_repository import load_data
 from utils import is_current_week, leer_recomendacion_semanal
 
 
-def obtener_valores_riego(counters):
-    # Load data from database 
+def obtener_valores_riego(counters, inicial=None, todos=False):
+    # Filter counters by inicial if provided
+    if inicial:
+        counters = counters[counters['inicial'] == inicial]
+
     # Obtain the list of unique parcels
     lista_parcelas = counters['partida'].tolist()
 
@@ -29,17 +32,18 @@ def obtener_valores_riego(counters):
         litros['Fin'] = pd.to_datetime(litros['Fin'], format='%b %d %Y %I:%M%p').dt.date
         litros['Inicio'] = pd.to_datetime(litros['Inicio'], format='%b %d %Y %I:%M%p').dt.date
 
-        # Filter by current week
-        litros['Semana'] = litros['Inicio'].apply(is_current_week)
+        # Filter by current week if todos is False
+        if not todos:
+            litros['Semana'] = litros['Inicio'].apply(is_current_week)
+            litros = litros[litros['Semana']]
         
         # Add parcel name to the dataframe
         nombre_parcela = counters.loc[counters['partida'] == parcela, 'nombre_completo']
         if not nombre_parcela.empty:
             litros['NombreParcela'] = nombre_parcela.iloc[0]
 
-        # Filter the data by current week and add it to the list
-        litros_filtrados = litros[litros['Semana']]
-        litros_totales.append(litros_filtrados[['Fin', 'Total', 'NombreParcela']])
+        # Add the filtered data to the list
+        litros_totales.append(litros[['Fin', 'Total', 'NombreParcela']])
 
     # If there is no data to process, return an empty DataFrame
     if not litros_totales:
@@ -51,8 +55,6 @@ def obtener_valores_riego(counters):
     # Pivot the table to make 'Fin' as columns
     riego_semanal = riego_semanal.pivot_table(index='NombreParcela', columns='Fin', values='Total', aggfunc='sum')
     
-    # Format the columns to be in the desired date format
-    #riego_semanal.columns = riego_semanal.columns.strftime('%d/%b')
     return riego_semanal
 
 def obtener_recomendacion_semanal(counters, riego_semanal):
@@ -81,9 +83,9 @@ def obtener_recomendacion_semanal(counters, riego_semanal):
 def obtener_datos():
     counters, _ = load_data()
     df = obtener_valores_riego(counters)
+    print(df)
     return obtener_recomendacion_semanal(counters, df)
 
 if __name__ == "__main__":
     # Obtain the final weekly irrigation data
     riego_semanal = obtener_datos()
-    print(riego_semanal)
