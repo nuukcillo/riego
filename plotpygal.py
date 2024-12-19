@@ -1,8 +1,9 @@
 import pandas as pd
 import pygal
-from webscrapU import get_dataframe_filtered_by_user
+import os
 from pygal.style import Style
 import random
+from database.riego_repository import load_data
 # dibuja un grafico de barras con los valores datos
 def plot_barchar_riego(xvalues, yvalues, partida=""):
     # colores de los graficos
@@ -30,32 +31,35 @@ def plot_barchar_riego(xvalues, yvalues, partida=""):
     bar_chart.render_to_file('static/images/{}.svg'.format(partida.iloc[0, 0]))
 
 
-def dibujar(usuario):
-    # leer y filtrar parcelas por usuario
-    parcelas = pd.read_csv("contadores.tsv", sep="\t", header=None, names=['user', 'partida', 'contador', 'hanegadas'])
-    parcelas_usuario = get_dataframe_filtered_by_user(parcelas, usuario)
+def plot_riego_semanal():
+    # Load data from database
+    counters, parcelas = load_data()
 
-    # leer csv para escribir el nombre bueno de la parcela en el grafico
-    datos_parcelas = pd.read_csv("datos_parcelas.tsv", delimiter="\t")
+    # Create a dictionary to store the total liters per parcel
+    total_liters = {parcela: 0 for parcela in counters['partida'].tolist()}
 
-    lista_parcelas = parcelas_usuario['partida'].tolist()
+    # Calculate total liters for each parcel
+    for parcela in total_liters.keys():
+        csv_file = os.path.join('csv_files', f"{parcela}.csv")
+        if not os.path.exists(csv_file):
+            continue
 
-    # dibujar los graficos de las parcelas del usuario dado
-    for parcela in lista_parcelas:
-        nombrecsv = "{}.csv".format(parcela)
-        litros = pd.read_csv(nombrecsv)
-        litros = litros.drop(['L. inicial', 'L. final'], axis=1)
-
+        litros = pd.read_csv(csv_file)
         litros['Total'] = litros['Total'].apply(lambda x: x.split(' ')[0])
         litros['Total'] = pd.to_numeric(litros['Total'], errors='coerce').fillna(0)
-        litros['Fin'] = pd.to_datetime(litros.Fin).dt.date
-        litros['Inicio'] = pd.to_datetime(litros.Fin).dt.date
-        # litros['Semana'] = litros['Inicio'].apply(check_if_current_week)
+        total_liters[parcela] = litros['Total'].sum()
 
-        litros_ultima_semana = litros.tail(7)
+    # Create a bar chart
+    bar_chart = pygal.Bar()
+    bar_chart.title = 'Total Liters of Water Used Per Parcel This Week'
 
-        plot_barchar_riego(litros_ultima_semana['Inicio'].apply(lambda x: x.strftime('%d/%b')),
-                           litros_ultima_semana['Total'],
-                           datos_parcelas[datos_parcelas['filename'].str.contains(nombrecsv.split('.')[0])])
+    for parcela, total in total_liters.items():
+        nombre_parcela = parcelas[parcelas['filename'].str.contains(parcela)]
+        if not nombre_parcela.empty:
+            bar_chart.add(nombre_parcela.iloc[0, 1], total)
 
-    return lista_parcelas
+    # Save the chart to a file
+    bar_chart.render_to_file('riego_semanal.svg')
+
+if __name__ == "__main__":
+    plot_riego_semanal()

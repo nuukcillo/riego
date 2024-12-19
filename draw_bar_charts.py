@@ -1,13 +1,8 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-import datetime
 from webscrapU import get_dataframe_filtered_by_user
 
-# Funcion para saber si la fecha actual esta es una semana concreta
-def check_if_current_week(date):
-    start_week = datetime.date.today() - datetime.timedelta(datetime.date.today().weekday())
-    end_week = start_week + datetime.timedelta(7)
-    return (date >= start_week) and (date < end_week)
+
 
 
 # dibuja un grafico de barras con los valores datos
