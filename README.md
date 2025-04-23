@@ -56,6 +56,21 @@ Para ejecutar el script de web scraping y guardar los datos en archivos CSV:
 python webscrapU.py
 ```
 
+Para ejecutar el script que guarde los datos en base de datos ejecutar lo siguiente:
+```sh
+python webscrapBD.py [--parse_all] [--month_year MMYYYY]
+```
+
+Donde:
+
+*   `--parse_all`: (Opcional) Si se incluye, analiza todas las filas de la tabla HTML en lugar de solo la última fila. Por defecto, solo se analiza la última fila.
+*   `--month_year MMYYYY`: (Opcional) Especifica el mes y el año para extraer los datos. El formato debe ser `MMYYYY` (ejemplo: `042024` para Abril de 2024`). Si no se especifica, se utiliza el mes y año actual.
+
+Ejemplo para analizar todos los datos de Mayo de 2023:
+```sh
+python webscrapBD.py --parse_all --month_year 052023
+```
+
 ### Procesar Datos de Riego Semanal
 
 Para procesar los datos de riego semanal y generar un informe:

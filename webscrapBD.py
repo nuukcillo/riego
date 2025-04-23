@@ -83,8 +83,17 @@ def parse_and_save_to_db(html_content, partida, conn, parse_all=False):
     logging.info(f"{len(rows_to_parse)} filas insertadas para partida {partida}")   
 
 def main():
+    parser = argparse.ArgumentParser(description="Web scraping script")
+    parser.add_argument("--parse_all", action="store_true", help="Parse all rows instead of just the last one")
+    parser.add_argument("--month_year", type=str, help="Month and year to scrape (MMYYYY)", default=dt.now().strftime('%m%Y'))
+    args = parser.parse_args()
+
+    month_year = args.month_year
+
     setup_logging()
     logging.info("Inicio del script")
+
+    parse_all = args.parse_all  # Store the value of parse_all
 
     config = load_config()
     LOGIN_URL = config['LOGIN_URL']
@@ -94,16 +103,9 @@ def main():
 
     # Cargar datos
     counters, users = load_data()
-    current_month_year = dt.now().strftime('%m%Y')
 
     # Conexión a la base de datos SQLite
     conn = sqlite3.connect(get_db_path())
-
-    parser = argparse.ArgumentParser(description="Web scraping script")
-    parser.add_argument("--parse_all", action="store_true", help="Parse all rows instead of just the last one")
-    args = parser.parse_args()
-
-    parse_all = args.parse_all  # Store the value of parse_all
 
     for user in users.itertuples():
         session = requests.Session()
@@ -116,7 +118,7 @@ def main():
 
         user_counters = counters[counters['inicial'] == user.inicial]
         for counter in user_counters.itertuples():
-            data_url = BASE_URL.format(counter.contador, current_month_year)
+            data_url = BASE_URL.format(counter.contador, month_year)
             response = make_request(session, 'GET', data_url, headers={'referer': data_url})
             if response and response.content:
                 parse_and_save_to_db(response.content, counter.partida, conn, parse_all)  # Pass the stored value
