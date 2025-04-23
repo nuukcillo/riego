@@ -35,6 +35,19 @@ def create_database():
             PRIMARY KEY (user, inicial)
         )
         '''
+        '''
+        CREATE TABLE IF NOT EXISTS datos_riego (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            partida TEXT,
+            fecha TEXT,
+            valor INTEGER,
+            FOREIGN KEY (partida) REFERENCES counters(partida)
+        )
+        ''',
+          # Índices recomendados
+        'CREATE INDEX IF NOT EXISTS idx_datos_partida ON datos_riego(partida, fecha)',
+        'CREATE INDEX IF NOT EXISTS idx_counters_inicial ON counters(inicial)',
+        'CREATE INDEX IF NOT EXISTS idx_users_user ON users(user)'
     ]
     execute_sql_commands(commands)
 
