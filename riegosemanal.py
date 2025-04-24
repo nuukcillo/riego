@@ -1,61 +1,45 @@
+import sqlite3
 import pandas as pd
-import os
-from database.riego_repository import load_data
-from utils import is_current_week, leer_recomendacion_semanal
+from datetime import datetime, timedelta
+from database.riego_repository import get_db_path, load_data
+from utils import leer_recomendacion_semanal
 
 
-def obtener_valores_riego(counters, inicial=None, todos=False):
-    # Filter counters by inicial if provided
+def obtener_valores_riego(inicial=None, todos=False):
+    """
+    Obtiene los valores de riego de la base de datos para la semana actual.
+    Si 'inicial' se indica, filtra por ese usuario.
+    Si 'todos' es True, devuelve todos los registros.
+    """
+    db_path = get_db_path()
+    conn = sqlite3.connect(db_path)
+
+    # Calcular inicio y fin de la semana actual
+    hoy = datetime.now()
+    inicio_semana = hoy - timedelta(days=hoy.weekday())
+    fin_semana = inicio_semana + timedelta(days=6)
+    inicio_str = inicio_semana.strftime('%Y-%m-%d 00:00:00')
+    fin_str = fin_semana.strftime('%Y-%m-%d 23:59:59')
+
+    query = "SELECT partida, fecha, valor FROM datos_riego"
+    params = []
+
+    if not todos:
+        query += " WHERE fecha BETWEEN ? AND ?"
+        params.extend([inicio_str, fin_str])
+
     if inicial:
-        counters = counters[counters['inicial'] == inicial]
-
-    # Obtain the list of unique parcels
-    lista_parcelas = counters['partida'].tolist()
-
-    # List to hold DataFrames for merging later
-    litros_totales = []
-
-    # Process each parcel
-    for parcela in lista_parcelas:
-        csv_file = os.path.join('csv_files', f"{parcela}.csv")
-        
-        # Skip if file doesn't exist
-        if not os.path.exists(csv_file):
-            continue
-        
-        # Load CSV data
-        litros = pd.read_csv(csv_file)
-
-        # Drop unnecessary columns and clean up data
-        litros = litros.drop(['L. inicial', 'L. final'], axis=1)
-        litros['Total'] = pd.to_numeric(litros['Total'].str.split(' ').str[0], errors='coerce').fillna(0)
-        litros['Fin'] = pd.to_datetime(litros['Fin'], format='%b %d %Y %I:%M%p').dt.date
-        litros['Inicio'] = pd.to_datetime(litros['Inicio'], format='%b %d %Y %I:%M%p').dt.date
-
-        # Filter by current week if todos is False
+        # Si ya hay un WHERE, añadimos AND
         if not todos:
-            litros['Semana'] = litros['Inicio'].apply(is_current_week)
-            litros = litros[litros['Semana']]
-        
-        # Add parcel name to the dataframe
-        nombre_parcela = counters.loc[counters['partida'] == parcela, 'nombre_completo']
-        if not nombre_parcela.empty:
-            litros['NombreParcela'] = nombre_parcela.iloc[0]
+            query += " AND partida IN (SELECT partida FROM counters WHERE inicial=?)"
+        else:
+            query += " WHERE partida IN (SELECT partida FROM counters WHERE inicial=?)"
+        params.append(inicial)
 
-        # Add the filtered data to the list
-        litros_totales.append(litros[['Fin', 'Total', 'NombreParcela']])
+    df = pd.read_sql_query(query, conn, params=params)
+    conn.close()
+    return df
 
-    # If there is no data to process, return an empty DataFrame
-    if not litros_totales:
-        return pd.DataFrame()
-
-    # Merge all data frames into one
-    riego_semanal = pd.concat(litros_totales, axis=0, ignore_index=True)
-
-    # Pivot the table to make 'Fin' as columns
-    riego_semanal = riego_semanal.pivot_table(index='NombreParcela', columns='Fin', values='Total', aggfunc='sum')
-    
-    return riego_semanal
 
 def obtener_recomendacion_semanal(counters, riego_semanal):
     # Load recommendations and data
@@ -68,10 +52,9 @@ def obtener_recomendacion_semanal(counters, riego_semanal):
     riego_semanal['Recomendacion Semanal'] = 0.0
 
     # Vectorized assignment for 'Recomendacion Semanal'
-    valid_parcelas = riego_semanal.index
     hanegadas = counters.set_index('nombre_completo')['hanegadas']
 
-    for parcela in valid_parcelas:
+    for parcela in riego_semanal.index:
         if parcela in hanegadas.index:
             riego_semanal.at[parcela, 'Recomendacion Semanal'] = hanegadas.loc[parcela] * recomendacion_semanal
 
