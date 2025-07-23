@@ -3,5 +3,7 @@
     "LOGIN_URL_REF": "https://tarragon.gootem.com/login.html",
     "LOGOUT_URL": "https://tarragon.gootem.com/logout.html",
     "BASE_URL": "https://tarragon.gootem.com/index.php?lang=en&page=historial_riego&idContador={0}&mes=F{1}",
-    "recomendacion_semanal" : 4
+    "recomendacion_semanal" : 4,
+    "TELEGRAM_TOKEN": "TELEGRAM TOKEN",
+    "TELEGRAM_CHAT_ID": "-1002773881979"
 }

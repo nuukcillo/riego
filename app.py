@@ -22,7 +22,6 @@ def home():
 
     nombre_usuarios = usuarios['name'].tolist()
     id_usuarios = usuarios['user'].tolist()
-    print(nombre_usuarios, id_usuarios)
     return render_template('index.html', users_name=nombre_usuarios, users_len=len(nombre_usuarios),
                            users_id=id_usuarios)
 
