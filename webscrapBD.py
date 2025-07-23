@@ -31,7 +31,6 @@ def setup_logging():
     )
     logging.info("Logging initialized")
 
-
 def make_request(session, method, url, **kwargs):
     try:
         if method == 'GET':
@@ -42,7 +41,16 @@ def make_request(session, method, url, **kwargs):
         logging.error(f"Request error: {e}")
     return None
 
-def parse_and_save_to_db(html_content, partida, conn, parse_all=False):
+def enviar_mensaje_telegram(token, chat_id, mensaje):
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    payload = {
+        "chat_id": chat_id,
+        "text": mensaje
+    }
+    response = requests.post(url, data=payload)
+    return response.ok
+
+def parse_and_save_to_db(html_content, partida, conn, telegram_token, telegram_chat_id, parse_all=False):
     """Parsea tabla HTML e inserta los datos en SQLite"""
     table = BeautifulSoup(html_content, 'lxml').find('table')
     if not table:
@@ -53,7 +61,7 @@ def parse_and_save_to_db(html_content, partida, conn, parse_all=False):
 
     cursor = conn.cursor()
     if parse_all:
-            rows_to_parse = rows
+        rows_to_parse = rows
     else:
         rows_to_parse = [rows[-1]] if rows else []
 
@@ -81,20 +89,17 @@ def parse_and_save_to_db(html_content, partida, conn, parse_all=False):
 
     conn.commit()
 
-    # Loguear los datos insertados desde el lunes de la semana actual hasta hoy
-    hoy = dt.now()
-    inicio_semana = hoy - timedelta(days=hoy.weekday())
-    inicio_str = inicio_semana.strftime('%Y-%m-%d 00:00:00')
-    fin_str = hoy.strftime('%Y-%m-%d %H:%M:%S')
-
-    cursor.execute(
-        "SELECT partida, fecha, valor FROM datos_riego WHERE partida = ? AND fecha BETWEEN ? AND ?",
-        (partida, inicio_str, fin_str)
-    )
-    inserted_rows = cursor.fetchall()
-    for r in inserted_rows:
-        logging.info(f"En BD (semana actual): partida={r[0]}, fecha={r[1]}, valor={r[2]}")
-    logging.info(f"{len(rows_to_parse)} filas insertadas para partida {partida}")   
+    if telegram_token and telegram_chat_id:
+        # Sumar lo regado hoy
+        hoy_str = dt.now().strftime('%Y-%m-%d')
+        cursor.execute(
+            "SELECT valor FROM datos_riego WHERE partida = ? AND fecha LIKE ?",
+            (partida, f"{hoy_str}%")
+        )
+        total_hoy = cursor.fetchone()[0] or 0
+        mensaje = f"{partida}: Hoy se han regado {total_hoy} m3."
+        enviar_mensaje_telegram(telegram_token, telegram_chat_id, mensaje)
+        logging.info(f"Mensaje enviado a Telegram: {mensaje}")
 
 def main():
     parser = argparse.ArgumentParser(description="Web scraping script")
@@ -114,7 +119,8 @@ def main():
     LOGIN_URL_REF = config['LOGIN_URL_REF']
     LOGOUT_URL = config['LOGOUT_URL']
     BASE_URL = config['BASE_URL']
-
+    TELEGRAM_TOKEN = config['TELEGRAM_TOKEN']
+    TELEGRAM_CHAT_ID = config['TELEGRAM_CHAT_ID']
     # Cargar datos
     counters, users = load_data()
 
@@ -135,7 +141,7 @@ def main():
             data_url = BASE_URL.format(counter.contador, month_year)
             response = make_request(session, 'GET', data_url, headers={'referer': data_url})
             if response and response.content:
-                parse_and_save_to_db(response.content, counter.partida, conn, parse_all)  # Pass the stored value
+                parse_and_save_to_db(response.content, counter.partida, conn, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID, parse_all)  # Pass the stored value
 
         make_request(session, 'GET', LOGOUT_URL, headers={'referer': LOGIN_URL_REF})
 
