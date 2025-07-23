@@ -41,16 +41,19 @@ def make_request(session, method, url, **kwargs):
         logging.error(f"Request error: {e}")
     return None
 
-def enviar_mensaje_telegram(token, chat_id, mensaje):
+def enviar_mensaje_telegram(token, chat_id, mensaje, parse_mode=None):
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     payload = {
         "chat_id": chat_id,
         "text": mensaje
     }
+    if parse_mode:
+        payload["parse_mode"] = parse_mode
+
     response = requests.post(url, data=payload)
     return response.ok
 
-def parse_and_save_to_db(html_content, partida, conn, telegram_token, telegram_chat_id, parse_all=False):
+def parse_and_save_to_db(html_content, partida, conn, parse_all=False):
     """Parsea tabla HTML e inserta los datos en SQLite"""
     table = BeautifulSoup(html_content, 'lxml').find('table')
     if not table:
@@ -76,30 +79,52 @@ def parse_and_save_to_db(html_content, partida, conn, telegram_token, telegram_c
             # Convert to SQLite-compatible format (YYYY-MM-DD HH:MM:SS)
             sqlite_date = parsed_date.strftime("%Y-%m-%d %H:%M:%S")
             
-            riego = row[1].strip()
+            riego = row[4].strip()
 
             riego_int = int(riego.split()[0])  # Extrae el primer elemento y lo convierte a entero
 
             cursor.execute("""
-                INSERT INTO datos_riego (partida, fecha, valor)
-                VALUES (?, ?, ?)
-            """, (partida, sqlite_date, riego_int))
+                    INSERT INTO datos_riego (partida, fecha, valor)
+                    VALUES (?, ?, ?)
+                    ON CONFLICT(partida, fecha) DO UPDATE SET valor=excluded.valor
+                """, (partida, sqlite_date, riego_int))
         except Exception as e:
             logging.error(f"Error insertando fila: {row} - {e}")
 
     conn.commit()
 
+
+def send_daily_irrigation_report(telegram_token, telegram_chat_id, conn):
+    cursor = conn.cursor()
     if telegram_token and telegram_chat_id:
-        # Sumar lo regado hoy
-        hoy_str = dt.now().strftime('%Y-%m-%d')
-        cursor.execute(
-            "SELECT valor FROM datos_riego WHERE partida = ? AND fecha LIKE ?",
-            (partida, f"{hoy_str}%")
-        )
-        total_hoy = cursor.fetchone()[0] or 0
-        mensaje = f"{partida}: Hoy se han regado {total_hoy} m3."
-        enviar_mensaje_telegram(telegram_token, telegram_chat_id, mensaje)
-        logging.info(f"Mensaje enviado a Telegram: {mensaje}")
+        # Fecha de ayer
+        fecha_obj = dt.now() - timedelta(days=1)
+        fecha_str = fecha_obj.strftime('%Y-%m-%d')
+
+        # Obtener todas las partidas con riego en esa fecha
+        cursor.execute("""
+            SELECT partida, valor 
+            FROM datos_riego 
+            WHERE fecha LIKE ?
+        """, (f"{fecha_str}%",))
+        resultados = cursor.fetchall()
+
+        if not resultados:
+            mensaje = f"📅 {fecha_str}\n💧 No se registró riego en ninguna partida."
+        else:
+            # Encabezado del mensaje
+            mensaje = f"📅 *Reporte de Riego - {fecha_str}*\n\n"
+            mensaje += "🌾 *Resumen por Partida:*\n\n"
+            mensaje += "```\n"
+            mensaje += f"{'Partida':<15}{'Riego (m³)':>12}\n"
+            mensaje += f"{'-'*27}\n"
+            for partida, valor in resultados:
+                mensaje += f"{partida:<15}{valor:>12}\n"
+            mensaje += "```\n"
+
+        enviar_mensaje_telegram(telegram_token, telegram_chat_id, mensaje, parse_mode='Markdown')
+
+
 
 def main():
     parser = argparse.ArgumentParser(description="Web scraping script")
@@ -141,9 +166,12 @@ def main():
             data_url = BASE_URL.format(counter.contador, month_year)
             response = make_request(session, 'GET', data_url, headers={'referer': data_url})
             if response and response.content:
-                parse_and_save_to_db(response.content, counter.partida, conn, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID, parse_all)  # Pass the stored value
+                parse_and_save_to_db(response.content, counter.partida, conn, parse_all)  # Pass the stored value
+        
 
         make_request(session, 'GET', LOGOUT_URL, headers={'referer': LOGIN_URL_REF})
+    
+    send_daily_irrigation_report(TELEGRAM_TOKEN, TELEGRAM_CHAT_ID, conn)
 
     conn.close()
     logging.info("Script terminado correctamente")

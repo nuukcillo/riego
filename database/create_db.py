@@ -1,6 +1,13 @@
 import sqlite3
 import os
 
+def reset_database():
+    db_path = get_db_path()
+    if os.path.exists(db_path):
+        os.remove(db_path)
+        print(f"Base de datos eliminada: {db_path}")
+    else:
+        print("No se encontró ninguna base de datos existente para eliminar.")
 def get_db_path():
     return os.path.join(os.path.dirname(__file__), 'riego.db')
 
@@ -19,7 +26,7 @@ def create_database():
         CREATE TABLE IF NOT EXISTS counters (
             inicial TEXT,
             partida TEXT,
-            contador INTEGER,
+            contador TEXT,
             hanegadas REAL,
             nombre_completo TEXT,
             PRIMARY KEY (partida),
@@ -34,13 +41,14 @@ def create_database():
             inicial TEXT,
             PRIMARY KEY (user, inicial)
         )
-        '''
+        ''',
         '''
         CREATE TABLE IF NOT EXISTS datos_riego (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             partida TEXT,
             fecha TEXT,
             valor INTEGER,
+            UNIQUE(partida, fecha)
             FOREIGN KEY (partida) REFERENCES counters(partida)
         )
         ''',
@@ -64,7 +72,6 @@ def insert_data():
         ('B', 'c_villar', 'C000233', 20, 'Camino el Villar'),
         ('F', 'higuerica', 'C000141', 6, 'Higuerica'),
         ('F', 'tarrosa', 'C000171', 7.7, 'Tarrosa'),
-        ('F', 'ramblagabacho', 'C000218', 3.3, 'Rambla Gabacho'),
         ('F', 'panderon', 'C000329', 120, 'Panderón'),
         ('F', 'mojon', 'C000340', 29, 'Mojón'),
         ('F', 'lalosa', 'C000356', 5, 'La Losa'),
@@ -85,6 +92,7 @@ def insert_data():
     conn.commit()
     conn.close()
 
+reset_database()
 # Create database and insert data
 create_database()
 insert_data()
