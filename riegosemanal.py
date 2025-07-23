@@ -83,7 +83,6 @@ def obtener_recomendacion_semanal(counters, riego_semanal):
 def obtener_datos():
     counters, _ = load_data()
     df = obtener_valores_riego(counters)
-    print(df)
     return obtener_recomendacion_semanal(counters, df)
 
 if __name__ == "__main__":
