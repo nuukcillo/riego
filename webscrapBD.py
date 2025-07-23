@@ -3,7 +3,7 @@ import sqlite3
 import os
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime as dt
+from datetime import datetime as dt, timedelta
 import sys
 import json
 import logging
@@ -80,6 +80,20 @@ def parse_and_save_to_db(html_content, partida, conn, parse_all=False):
             logging.error(f"Error insertando fila: {row} - {e}")
 
     conn.commit()
+
+    # Loguear los datos insertados desde el lunes de la semana actual hasta hoy
+    hoy = dt.now()
+    inicio_semana = hoy - timedelta(days=hoy.weekday())
+    inicio_str = inicio_semana.strftime('%Y-%m-%d 00:00:00')
+    fin_str = hoy.strftime('%Y-%m-%d %H:%M:%S')
+
+    cursor.execute(
+        "SELECT partida, fecha, valor FROM datos_riego WHERE partida = ? AND fecha BETWEEN ? AND ?",
+        (partida, inicio_str, fin_str)
+    )
+    inserted_rows = cursor.fetchall()
+    for r in inserted_rows:
+        logging.info(f"En BD (semana actual): partida={r[0]}, fecha={r[1]}, valor={r[2]}")
     logging.info(f"{len(rows_to_parse)} filas insertadas para partida {partida}")   
 
 def main():
