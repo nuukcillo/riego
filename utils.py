@@ -1,4 +1,9 @@
 import json
+import sys
+import json
+import os
+import logging
+import requests
 from datetime import date, timedelta
 
 def is_current_week(date_to_check):
@@ -16,20 +21,36 @@ def is_current_week(date_to_check):
     end_of_week = start_of_week + timedelta(days=7)         # Lunes de la próxima semana
     return start_of_week <= date_to_check < end_of_week
 
-def leer_recomendacion_semanal():
-    """
-    Lee el valor de 'recomendacion_semanal' de un archivo JSON.
-
-    Returns:
-        int: Valor de la recomendación semanal, o None si no se encuentra.
-    """
-    archivo_config = "config.json"
+def load_config(config_filename='config.json'):
+    """Load the configuration file."""
+    config_path = os.path.join(os.path.dirname(__file__), config_filename)
     try:
-        with open(archivo_config, 'r', encoding='utf-8') as archivo:
-            config = json.load(archivo)
-            return config.get("recomendacion_semanal", None)
-    except FileNotFoundError:
-        print(f"El archivo {archivo_config} no se encontró.")
+        with open(config_path, 'r') as config_file:
+            return json.load(config_file)
     except json.JSONDecodeError:
-        print(f"El archivo {archivo_config} no es un JSON válido.")
+        logging.error(f"El archivo {config_filename} no es un JSON válido.")
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        logging.error(f"Error loading config file: {e}")
+        sys.exit(1)
+
+def setup_logging():
+    """Setup logging configuration."""
+    log_filename = f"{os.path.basename(__file__).split('.')[0]}.log"
+    logging.basicConfig(
+        filename=log_filename,
+        format='%(asctime)s %(message)s',
+        datefmt='%d/%m/%Y %I:%M:%S %p',
+        filemode="w+",
+        level=logging.DEBUG
+    )
+    logging.info("Logging initialized")
+
+def make_request(session, method, url, **kwargs):
+    try:
+        if method == 'GET':
+            return session.get(url, **kwargs)
+        elif method == 'POST':
+            return session.post(url, **kwargs)
+    except requests.RequestException as e:
+        logging.error(f"Request error: {e}")
     return None

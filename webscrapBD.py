@@ -1,57 +1,14 @@
 import argparse
+import logging
 import sqlite3
-import os
+from datetime import datetime as dt
+
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime as dt, timedelta
-import sys
-import json
-import logging
+
 from database.riego_repository import load_data, get_db_path
-
-def load_config(config_filename='config.json'):
-    """Load the configuration file."""
-    config_path = os.path.join(os.path.dirname(__file__), config_filename)
-    try:
-        with open(config_path, 'r') as config_file:
-            return json.load(config_file)
-    except (FileNotFoundError, json.JSONDecodeError) as e:
-        logging.error(f"Error loading config file: {e}")
-        sys.exit(1)
-
-def setup_logging():
-    """Setup logging configuration."""
-    log_filename = f"{os.path.basename(__file__).split('.')[0]}.log"
-    logging.basicConfig(
-        filename=log_filename,
-        format='%(asctime)s %(message)s',
-        datefmt='%d/%m/%Y %I:%M:%S %p',
-        filemode="w+",
-        level=logging.DEBUG
-    )
-    logging.info("Logging initialized")
-
-def make_request(session, method, url, **kwargs):
-    try:
-        if method == 'GET':
-            return session.get(url, **kwargs)
-        elif method == 'POST':
-            return session.post(url, **kwargs)
-    except requests.RequestException as e:
-        logging.error(f"Request error: {e}")
-    return None
-
-def enviar_mensaje_telegram(token, chat_id, mensaje, parse_mode=None):
-    url = f"https://api.telegram.org/bot{token}/sendMessage"
-    payload = {
-        "chat_id": chat_id,
-        "text": mensaje
-    }
-    if parse_mode:
-        payload["parse_mode"] = parse_mode
-
-    response = requests.post(url, data=payload)
-    return response.ok
+from telegramutils import enviar_avisos_riego_anormal, enviar_informe_riego_diario
+from utils import load_config, setup_logging, make_request
 
 def parse_and_save_to_db(html_content, partida, conn, parse_all=False):
     """Parsea tabla HTML e inserta los datos en SQLite"""
@@ -93,40 +50,8 @@ def parse_and_save_to_db(html_content, partida, conn, parse_all=False):
 
     conn.commit()
 
-
-def send_daily_irrigation_report(telegram_token, telegram_chat_id, conn):
-    cursor = conn.cursor()
-    if telegram_token and telegram_chat_id:
-        # Fecha de ayer
-        fecha_obj = dt.now() - timedelta(days=1)
-        fecha_str = fecha_obj.strftime('%Y-%m-%d')
-
-        # Obtener todas las partidas con riego en esa fecha
-        cursor.execute("""
-            SELECT partida, valor 
-            FROM datos_riego 
-            WHERE fecha LIKE ?
-        """, (f"{fecha_str}%",))
-        resultados = cursor.fetchall()
-
-        if not resultados:
-            mensaje = f"📅 {fecha_str}\n💧 No se registró riego en ninguna partida."
-        else:
-            # Encabezado del mensaje
-            mensaje = f"📅 *Reporte de Riego - {fecha_str}*\n\n"
-            mensaje += "🌾 *Resumen por Partida:*\n\n"
-            mensaje += "```\n"
-            mensaje += f"{'Partida':<15}{'Riego (m³)':>12}\n"
-            mensaje += f"{'-'*27}\n"
-            for partida, valor in resultados:
-                mensaje += f"{partida:<15}{valor:>12}\n"
-            mensaje += "```\n"
-
-        enviar_mensaje_telegram(telegram_token, telegram_chat_id, mensaje, parse_mode='Markdown')
-
-
-
 def main():
+    """Main function to run the web scraping and data insertion"""
     parser = argparse.ArgumentParser(description="Web scraping script")
     parser.add_argument("--parse_all", action="store_true", help="Parse all rows instead of just the last one")
     parser.add_argument("--month_year", type=str, help="Month and year to scrape (MMYYYY)", default=dt.now().strftime('%m%Y'))
@@ -171,8 +96,8 @@ def main():
 
         make_request(session, 'GET', LOGOUT_URL, headers={'referer': LOGIN_URL_REF})
     
-    send_daily_irrigation_report(TELEGRAM_TOKEN, TELEGRAM_CHAT_ID, conn)
-
+    enviar_informe_riego_diario(TELEGRAM_TOKEN, TELEGRAM_CHAT_ID, conn)
+    enviar_avisos_riego_anormal(TELEGRAM_TOKEN, TELEGRAM_CHAT_ID)
     conn.close()
     logging.info("Script terminado correctamente")
 
