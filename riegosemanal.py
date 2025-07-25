@@ -1,9 +1,10 @@
 import sqlite3
 import pandas as pd
+import json
+import logging
 from datetime import datetime, timedelta
 from database.riego_repository import get_db_path, load_data
-from utils import leer_recomendacion_semanal
-
+from flask import current_app
 
 def obtener_valores_riego(inicial=None, todos=False):
     """
@@ -40,10 +41,29 @@ def obtener_valores_riego(inicial=None, todos=False):
     conn.close()
     return df
 
+def leer_recomendacion_semanal(app=None):
+    """
+    Lee el valor de 'recomendacion_semanal' de un archivo JSON.
+    Si se pasa una app Flask, usa su logger.
+    """
+    archivo_config = "config.json"
+    try:
+        with open(archivo_config, 'r', encoding='utf-8') as archivo:
+            config = json.load(archivo)
+            return config.get("recomendacion_semanal", None)
+    except FileNotFoundError:
+        msg = f"El archivo {archivo_config} no se encontró."
+        if app:
+            app.logger.error(msg)
+    except json.JSONDecodeError:
+        msg = f"El archivo {archivo_config} no es un JSON válido."
+        if app:
+            app.logger.error(msg)
+    return 0
 
 def obtener_recomendacion_semanal(counters, riego_semanal):
     # Load recommendations and data
-    recomendacion_semanal = leer_recomendacion_semanal()
+    recomendacion_semanal = leer_recomendacion_semanal(app=current_app)
 
     # Calculate weekly irrigation total
     riego_semanal['Riego Semanal'] = riego_semanal.sum(axis=1)
