@@ -1,6 +1,6 @@
 import sqlite3
 from datetime import datetime, timedelta
-from database.create_db import get_db_path
+from database.riego_repository import get_db_path
 
 
 def detectar_riegos_anormales(umbral_factor=3):
