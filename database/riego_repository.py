@@ -9,9 +9,18 @@ def load_data():
     db_path = get_db_path()
     conn = sqlite3.connect(db_path)
 
+     #testing connection)
+    print(f"🔍 Ruta de la base de datos: {db_path}")
+    cursor = conn.cursor()
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+    print(f"📄 Tablas encontradas en la base: {[row[0] for row in cursor.fetchall()]}")
+    #fin testing connection
+
     # Load data into DataFrames
     counters = pd.read_sql_query("SELECT * FROM counters", conn)
     users = pd.read_sql_query("SELECT * FROM users", conn)
+
+   
 
     conn.close()
     return counters, users
