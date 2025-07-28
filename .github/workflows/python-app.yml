@@ -59,7 +59,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run webscrapBD.py
-        run: python webscrapBD.py
+        run: python -u webscrapBD.py
 
       - name: Commit and push database changes
         run: |
