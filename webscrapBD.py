@@ -1,6 +1,7 @@
 import argparse
 import logging
 import sqlite3
+import os
 from datetime import datetime as dt
 
 import requests
@@ -69,8 +70,8 @@ def main():
     LOGIN_URL_REF = config['LOGIN_URL_REF']
     LOGOUT_URL = config['LOGOUT_URL']
     BASE_URL = config['BASE_URL']
-    TELEGRAM_TOKEN = config['TELEGRAM_TOKEN']
-    TELEGRAM_CHAT_ID = config['TELEGRAM_CHAT_ID']
+    TELEGRAM_TOKEN = os.environ['TELEGRAM_TOKEN']
+    TELEGRAM_CHAT_ID = os.environ['TELEGRAM_CHAT_ID']
     # Cargar datos
     counters, users = load_data()
 
