@@ -1,6 +1,7 @@
 import sqlite3
 import os
-import pandas as pd
+
+from database.create_db import Counter, User, WebScrapConfig
 
 def get_db_path():
     return os.path.join(os.path.dirname(__file__), 'riego.db')
@@ -8,22 +9,35 @@ def get_db_path():
 def load_data():
     db_path = get_db_path()
     conn = sqlite3.connect(db_path)
-
-     #testing connection)
-    print(f"🔍 Ruta de la base de datos: {db_path}")
-    cursor = conn.cursor()
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-    print(f"📄 Tablas encontradas en la base: {[row[0] for row in cursor.fetchall()]}")
-    #fin testing connection
-
-    # Load data into DataFrames
-    counters = pd.read_sql_query("SELECT * FROM counters", conn)
-    users = pd.read_sql_query("SELECT * FROM users", conn)
-
-   
-
+    conn.row_factory = sqlite3.Row  # Acceso por nombre de columna
+    
+    counters_rows = conn.execute("SELECT * FROM counters").fetchall()
+    users_rows = conn.execute("SELECT * FROM users").fetchall()
+    config_rows = conn.execute("SELECT * FROM config").fetchall()
+    
     conn.close()
-    return counters, users
+
+    counters = [Counter(
+        inicial=row['inicial'],
+        partida=row['partida'],
+        contador=row['contador'],
+        hanegadas=row['hanegadas'],
+        nombre_completo=row['nombre_completo']
+    ) for row in counters_rows]
+
+    users = [User(
+        user=row['user'],
+        psswd=row['psswd'],
+        name=row['name'],
+        inicial=row['inicial']
+    ) for row in users_rows]
+
+    wsconfigs = [WebScrapConfig(
+        key=row['key'],
+        value=row['value']
+    ) for row in config_rows]
+
+    return counters, users, wsconfigs
 
 def obtener_inicial(usuario):
     # Conectar a la base de datos SQLite

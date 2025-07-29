@@ -96,7 +96,7 @@ def main():
         
 
         make_request(session, 'GET', LOGOUT_URL, headers={'referer': LOGIN_URL_REF})
-    print(TELEGRAM_CHAT_ID)
+
     enviar_informe_riego_diario(TELEGRAM_TOKEN, TELEGRAM_CHAT_ID, conn)
     enviar_avisos_riego_anormal(TELEGRAM_TOKEN, TELEGRAM_CHAT_ID)
     conn.close()
