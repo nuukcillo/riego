@@ -1,7 +1,7 @@
 import sqlite3
 import os
 
-from database.create_db import Counter, User, WebScrapConfig
+from models import Counter, User, WebScrapConfig
 
 def get_db_path():
     return os.path.join(os.path.dirname(__file__), 'riego.db')
