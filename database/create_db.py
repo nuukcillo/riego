@@ -183,7 +183,7 @@ def migrate_configjson(json_file='config.json'):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Gestión de la base de datos de riego.")
     parser.add_argument(
-        "action",
+        "accion",
         choices=["init", "reset_init", "migrate_config"],
         help="Acción a realizar: init (crear/insertar), reset_init (resetear y crear), migrate_config (migrar config.json)"
     )
