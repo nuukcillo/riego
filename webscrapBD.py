@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 
 from database.riego_repository import load_data, get_db_path
 from telegramutils import enviar_avisos_riego_anormal, enviar_informe_riego_diario
-from utils import load_config, setup_logging, make_request
+from utils import setup_logging, make_request
 
 def parse_and_save_to_db(html_content, partida, conn, parse_all=False):
     """Parsea tabla HTML e inserta los datos en SQLite"""
@@ -65,20 +65,23 @@ def main():
 
     parse_all = args.parse_all  # Store the value of parse_all
 
-    config = load_config()
-    LOGIN_URL = config['LOGIN_URL']
-    LOGIN_URL_REF = config['LOGIN_URL_REF']
-    LOGOUT_URL = config['LOGOUT_URL']
-    BASE_URL = config['BASE_URL']
+    # Cargar secretos y configuraciones
     TELEGRAM_TOKEN = os.environ['TELEGRAM_TOKEN']
     TELEGRAM_CHAT_ID = os.environ['TELEGRAM_CHAT_ID']
-    # Cargar datos
-    counters, users = load_data()
+
+    counters, users, configs = load_data()
+
+    config_dict = {cfg.key: cfg.value for cfg in configs}
+
+    LOGIN_URL = config_dict['LOGIN_URL']
+    LOGIN_URL_REF = config_dict['LOGIN_URL_REF']
+    LOGOUT_URL = config_dict['LOGOUT_URL']
+    BASE_URL = config_dict['BASE_URL']
 
     # Conexión a la base de datos SQLite
     conn = sqlite3.connect(get_db_path())
 
-    for user in users.itertuples():
+    for user in users:
         session = requests.Session()
         login_payload = {"usuario": user.user, "password": user.psswd}
 
@@ -87,13 +90,13 @@ def main():
             logging.error(f"Error al hacer login con {user.user}")
             continue
 
-        user_counters = counters[counters['inicial'] == user.inicial]
-        for counter in user_counters.itertuples():
+        user_counters = [c for c in counters if c.inicial == user.inicial]
+
+        for counter in user_counters:
             data_url = BASE_URL.format(counter.contador, month_year)
             response = make_request(session, 'GET', data_url, headers={'referer': data_url})
             if response and response.content:
                 parse_and_save_to_db(response.content, counter.partida, conn, parse_all)  # Pass the stored value
-        
 
         make_request(session, 'GET', LOGOUT_URL, headers={'referer': LOGIN_URL_REF})
 

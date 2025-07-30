@@ -37,8 +37,6 @@ def load_data():
         value=row['value']
     ) for row in config_rows]
     
-    print(counters, users, wsconfigs)
-
     return counters, users, wsconfigs
 
 def obtener_inicial(usuario):
