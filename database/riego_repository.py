@@ -36,6 +36,8 @@ def load_data():
         key=row['key'],
         value=row['value']
     ) for row in config_rows]
+    
+    print(counters, users, wsconfigs)
 
     return counters, users, wsconfigs
 
@@ -58,3 +60,7 @@ def obtener_inicial(usuario):
         return resultado[0]
     else:
         return None  # Usuario no encontrado
+
+
+if __name__ == '__main__':
+    load_data()
