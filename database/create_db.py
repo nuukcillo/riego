@@ -3,7 +3,7 @@ import sqlite3
 import os
 import json
 from models import Counter, User, WebScrapConfig
-from migrations.rec_semanal import recomendacion_semanal_migration
+from database.migrations.rec_semanal import recomendacion_semanal_migration
 
 def reset_database():
 
