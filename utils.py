@@ -21,6 +21,17 @@ def is_current_week(date_to_check):
     end_of_week = start_of_week + timedelta(days=7)         # Lunes de la próxima semana
     return start_of_week <= date_to_check < end_of_week
 
+def last_sunday():
+    """
+    Obtiene la fecha del último domingo.
+
+    Returns:
+        datetime.date: Fecha del último domingo.
+    """
+    today = date.today()
+    last_sunday = today - timedelta(days=(today.weekday() + 1) % 7)  # Domingo de la semana pasada
+    return last_sunday
+
 def load_config(config_filename='config.json'):
     """Load the configuration file."""
     config_path = os.path.join(os.path.dirname(__file__), config_filename)
