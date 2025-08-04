@@ -60,7 +60,7 @@ def enviar_informe_recomendacion_semanal(telegram_token, telegram_chat_id, conn)
     fecha_inicio = fecha_fin - timedelta(days=6)
 
           
-    cursor.execute("SELECT riegos_por_semana FROM recomendacion_semanal WHERE mes = ?", (fecha_inicio.month))
+    cursor.execute("SELECT riegos_por_semana FROM recomendacion_semanal WHERE mes = ?", (fecha_inicio.month,))
     numero_riegos_rec_query = cursor.fetchone()
 
     numero_riegos_rec = 0

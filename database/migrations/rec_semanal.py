@@ -40,9 +40,9 @@ def recomendacion_semanal_migration():
         VALUES (?, ?)
         ''', datos_riego)
 
-        cursor.execute(''''
+        cursor.execute('''
             INSERT OR REPLACE INTO config (key, value) 
-            VALUES (FACTOR_HGA_RIEGO, "2.5")
+            VALUES ("FACTOR_HGA_RIEGO", "2.5")
         ''')
 
         # Confirmar cambios y cerrar conexión
