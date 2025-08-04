@@ -3,6 +3,7 @@ import logging
 import sqlite3
 import os
 from datetime import datetime as dt
+from datetime import timedelta
 
 import requests
 from bs4 import BeautifulSoup
@@ -55,10 +56,15 @@ def main():
     """Main function to run the web scraping and data insertion"""
     parser = argparse.ArgumentParser(description="Web scraping script")
     parser.add_argument("--parse_all", action="store_true", help="Parse all rows instead of just the last one")
-    parser.add_argument("--month_year", type=str, help="Month and year to scrape (MMYYYY)", default=dt.now().strftime('%m%Y'))
+
+    # Se le quita un día porque el uno de cada mes tiene que coger el mes anterior
+    default_month_year = (dt.now() - timedelta(days=1)).strftime('%m%Y')
+
+    parser.add_argument("--month_year", type=str, help="Month and year to scrape (MMYYYY)", default=default_month_year)
     args = parser.parse_args()
 
     month_year = args.month_year
+
 
     setup_logging()
     logging.info("Inicio del script")
@@ -96,7 +102,7 @@ def main():
         
 
         make_request(session, 'GET', LOGOUT_URL, headers={'referer': LOGIN_URL_REF})
-    print(TELEGRAM_CHAT_ID)
+
     enviar_informe_riego_diario(TELEGRAM_TOKEN, TELEGRAM_CHAT_ID, conn)
     enviar_avisos_riego_anormal(TELEGRAM_TOKEN, TELEGRAM_CHAT_ID)
     conn.close()
