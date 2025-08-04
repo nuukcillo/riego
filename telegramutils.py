@@ -52,3 +52,10 @@ def enviar_avisos_riego_anormal(telegram_token, telegram_chat_id):
         mensaje += "\n".join(avisos)
         enviar_mensaje_telegram(telegram_token, telegram_chat_id, mensaje, parse_mode='Markdown')
  
+def enviar_informe_recomendacion_semanal(telegram_token, telegram_chat_id, conn):
+    cursor = conn.cursor()
+    cursor.execute("SELECT mes, riegos_por_semana FROM recomendacion_semanal")
+    recomendaciones = cursor.fetchall()
+
+    
+  

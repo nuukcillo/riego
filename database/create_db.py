@@ -3,6 +3,7 @@ import sqlite3
 import os
 import json
 from models import Counter, User, WebScrapConfig
+from migrations.rec_semanal import recomendacion_semanal_migration
 
 def reset_database():
 
@@ -177,11 +178,13 @@ if __name__ == "__main__":
     if args.accion == "init":
         create_database()
         insert_data()
+        recomendacion_semanal_migration()
         print("Base de datos inicializada.")
     elif args.accion == "reset_init":
         reset_database()
         create_database()
         insert_data()
+        recomendacion_semanal_migration()
         print("Base de datos reseteada e inicializada.")
     elif args.accion == "migrate_config":
         success = migrate_configjson(args.config)
