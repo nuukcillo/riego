@@ -55,66 +55,87 @@ def enviar_avisos_riego_anormal(telegram_token, telegram_chat_id):
  
 def enviar_informe_recomendacion_semanal(telegram_token, telegram_chat_id, conn):
     cursor = conn.cursor()
-   
+
     fecha_fin = last_sunday()
     fecha_inicio = fecha_fin - timedelta(days=6)
 
-          
+    # Obtener número de riegos recomendados por semana
     cursor.execute("SELECT riegos_por_semana FROM recomendacion_semanal WHERE mes = ?", (fecha_inicio.month,))
-    numero_riegos_rec_query = cursor.fetchone()
+    numero_riegos_rec_row = cursor.fetchone()
+    numero_riegos_rec = int(numero_riegos_rec_row[0]) if numero_riegos_rec_row else 0
 
-    numero_riegos_rec = 0
-    
-    if numero_riegos_rec_query is not None:
-        numero_riegos_rec = int(numero_riegos_rec_query[0])
-    
     if numero_riegos_rec == 0:
         print("No se encontró la recomendación de riego para este mes.")
-        exit(1)
-    
-    # Obtener los riegos de la última semana por partida
+        return
+
+    # Obtener riegos de la semana con hanegadas en una sola consulta
     cursor.execute("""
-        SELECT partida, COUNT(*) as num_riegos, SUM(valor) as total_riego
-        FROM datos_riego
-        WHERE fecha BETWEEN ? AND ?
-        GROUP BY partida
+        SELECT d.partida, COUNT(*) as num_riegos, SUM(d.valor) as total_riego, c.hanegadas
+        FROM datos_riego d
+        JOIN counters c ON d.partida = c.partida
+        WHERE d.fecha BETWEEN ? AND ?
+        GROUP BY d.partida
     """, (fecha_inicio.strftime("%Y-%m-%d"), fecha_fin.strftime("%Y-%m-%d")))
 
-    riegos_semanales = cursor.fetchall()
+    riegos = cursor.fetchall()
 
+    # Encabezado del mensaje
     fecha_inicio_str = fecha_inicio.strftime("%d/%m/%Y")
     fecha_fin_str = fecha_fin.strftime("%d/%m/%Y")
     
-    mensaje = f"🍃 *Informe semanal riego* 🍊\n\n📅 Semana: *{fecha_inicio_str}* → *{fecha_fin_str}*\n\n"
-    mensaje += f"Nº riegos recomendados: {numero_riegos_rec}\n"
+    mensaje_md = (
+    "🍃 *Informe semanal riego* 🍊\n\n"
+    f"📅 Semana: *{fecha_inicio.strftime('%d/%m/%Y')}* → *{fecha_fin.strftime('%d/%m/%Y')}*\n"
+    f"Nº riegos recomendados: *{numero_riegos_rec}*\n\n"
+    "```\n"
+    "Partida   | #Riegos | Real (m³) | Recom.  | Estado \n"
+    "----------|---------|-----------|---------|--------\n"
+    )
 
+    for partida, num_riegos, total_riego, hanegadas in riegos:
+        recomendado = 2.5 * hanegadas * num_riegos
+        margen = recomendado * 0.10
 
-    for partida, num_riegos, total_riego in riegos_semanales:
-        cursor.execute("SELECT hanegadas FROM counters WHERE partida = ?", (partida,))
-        resultado = cursor.fetchone()
-        
-        mensaje += f" `{partida}` | Número: *{num_riegos}* | Riego (m³): *{total_riego}* | "
-        if resultado:
-            hanegadas = resultado[0]
-            recomendacion = 2.5 * hanegadas * num_riegos
+        if total_riego < recomendado - margen:
+            estado = "🔻Bajo"
+        elif total_riego > recomendado + margen:
+            estado = "🔺Alto"
+        else:
+            estado = "✅OK"
 
-            margen = recomendacion * 0.10
-            if total_riego < recomendacion - margen:
-                estado = "🔻 *Por debajo*"
-            elif total_riego > recomendacion + margen:
-                estado = "🔺 *Por encima*"
-            else:
-                estado = "✅ *Similar*"
+        mensaje_md += f"{partida:<10}|{num_riegos:^9}|{total_riego:^11.1f}|{recomendado:^9.1f}|{estado:^8}\n"
 
-            mensaje += f"📊 Recomendado: *{recomendacion:.2f}* → {estado}\n"
-        
-        if num_riegos < numero_riegos_rec:
-            mensaje += f" | ⚠️: Nº Reg : {num_riegos}\n"
-       
+    mensaje_md += "```"
 
-    # Enviar el mensaje por Telegram
-    enviar_mensaje_telegram(telegram_token, telegram_chat_id, mensaje, parse_mode='Markdown')
+    # Enviar con parse_mode Markdown
+    enviar_mensaje_telegram(telegram_token, telegram_chat_id, mensaje_md, parse_mode='Markdown')
 
+    mensaje_html = (
+    "🍃 <b>Informe semanal riego</b> 🍊<br><br>"
+    f"📅 Semana: <b>{fecha_inicio.strftime('%d/%m/%Y')}</b> → <b>{fecha_fin.strftime('%d/%m/%Y')}</b><br>"
+    f"Nº riegos recomendados: <b>{numero_riegos_rec}</b><br><br>"
+    "<pre>\n"
+    "Partida   | #Riegos | Real (m³) | Recom.  | Estado \n"
+    "----------|---------|-----------|---------|--------\n"
+    )
+
+    for partida, num_riegos, total_riego, hanegadas in riegos:
+        recomendado = 2.5 * hanegadas * num_riegos
+        margen = recomendado * 0.10
+
+        if total_riego < recomendado - margen:
+            estado = "🔻Bajo"
+        elif total_riego > recomendado + margen:
+            estado = "🔺Alto"
+        else:
+            estado = "✅OK"
+
+        mensaje_html += f"{partida:<10}|{num_riegos:^9}|{total_riego:^11.1f}|{recomendado:^9.1f}|{estado:^8}\n"
+
+    mensaje_html += "</pre>"
+
+    # Enviar con parse_mode HTML
+    enviar_mensaje_telegram(telegram_token, telegram_chat_id, mensaje_html, parse_mode='HTML')
 
 
   
