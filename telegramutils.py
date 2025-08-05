@@ -80,16 +80,13 @@ def enviar_informe_recomendacion_semanal(telegram_token, telegram_chat_id, conn)
     riegos = cursor.fetchall()
 
     # Encabezado del mensaje
-    fecha_inicio_str = fecha_inicio.strftime("%d/%m/%Y")
-    fecha_fin_str = fecha_fin.strftime("%d/%m/%Y")
-    
     mensaje_md = (
     "🍃 *Informe semanal riego* 🍊\n\n"
     f"📅 Semana: *{fecha_inicio.strftime('%d/%m/%Y')}* → *{fecha_fin.strftime('%d/%m/%Y')}*\n"
     f"Nº riegos recomendados: *{numero_riegos_rec}*\n\n"
     "```\n"
-    "Partida   | #Riegos | Real (m³) | Recom.  | Estado \n"
-    "----------|---------|-----------|---------|--------\n"
+    "  Partida   | #Riegos | Real (m³) | Recom.  | Estado \n"
+    "------------|---------|-----------|---------|--------\n"
     )
 
     for partida, num_riegos, total_riego, hanegadas in riegos:
@@ -103,39 +100,11 @@ def enviar_informe_recomendacion_semanal(telegram_token, telegram_chat_id, conn)
         else:
             estado = "✅OK"
 
-        mensaje_md += f"{partida:<10}|{num_riegos:^9}|{total_riego:^11.1f}|{recomendado:^9.1f}|{estado:^8}\n"
+        mensaje_md += f"{partida:<12}|{num_riegos:^9}|{total_riego:^11.1f}|{recomendado:^9.1f}|{estado:^8}\n"
 
     mensaje_md += "```"
 
     # Enviar con parse_mode Markdown
     enviar_mensaje_telegram(telegram_token, telegram_chat_id, mensaje_md, parse_mode='Markdown')
-
-    mensaje_html = (
-    "🍃 <b>Informe semanal riego</b> 🍊<br><br>"
-    f"📅 Semana: <b>{fecha_inicio.strftime('%d/%m/%Y')}</b> → <b>{fecha_fin.strftime('%d/%m/%Y')}</b><br>"
-    f"Nº riegos recomendados: <b>{numero_riegos_rec}</b><br><br>"
-    "<pre>\n"
-    "Partida   | #Riegos | Real (m³) | Recom.  | Estado \n"
-    "----------|---------|-----------|---------|--------\n"
-    )
-
-    for partida, num_riegos, total_riego, hanegadas in riegos:
-        recomendado = 2.5 * hanegadas * num_riegos
-        margen = recomendado * 0.10
-
-        if total_riego < recomendado - margen:
-            estado = "🔻Bajo"
-        elif total_riego > recomendado + margen:
-            estado = "🔺Alto"
-        else:
-            estado = "✅OK"
-
-        mensaje_html += f"{partida:<10}|{num_riegos:^9}|{total_riego:^11.1f}|{recomendado:^9.1f}|{estado:^8}\n"
-
-    mensaje_html += "</pre>"
-
-    # Enviar con parse_mode HTML
-    enviar_mensaje_telegram(telegram_token, telegram_chat_id, mensaje_html, parse_mode='HTML')
-
 
   
