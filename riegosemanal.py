@@ -1,7 +1,6 @@
 import sqlite3
 import pandas as pd
 import json
-import logging
 from datetime import datetime, timedelta
 from database.riego_repository import get_db_path, load_data
 from flask import current_app

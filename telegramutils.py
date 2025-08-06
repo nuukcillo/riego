@@ -67,6 +67,10 @@ def enviar_informe_recomendacion_semanal(telegram_token, telegram_chat_id, conn)
     if numero_riegos_rec == 0:
         print("No se encontró la recomendación de riego para este mes.")
         return
+    #obtener factor recomendacion semanal por hanegada
+    cursor.execute("SELECT value FROM config WHERE key = 'FACTOR_HGA_RIEGO'")
+    factor_recomendacion_semanal_hanegada_row = cursor.fetchone()
+    factor_recomendacion_semanal_hanegada = float(factor_recomendacion_semanal_hanegada_row[0]) if factor_recomendacion_semanal_hanegada_row else 2.5
 
     # Obtener riegos de la semana con hanegadas en una sola consulta
     cursor.execute("""
@@ -90,7 +94,7 @@ def enviar_informe_recomendacion_semanal(telegram_token, telegram_chat_id, conn)
     )
 
     for partida, num_riegos, total_riego, hanegadas in riegos:
-        recomendado = 2.5 * hanegadas * num_riegos
+        recomendado = factor_recomendacion_semanal_hanegada * hanegadas * num_riegos
         margen = recomendado * 0.10
 
         if total_riego < recomendado - margen:
