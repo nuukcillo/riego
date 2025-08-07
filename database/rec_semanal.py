@@ -1,6 +1,6 @@
 import sqlite3
 
-from database.riego_repository import get_db_path
+from riego_repository import get_db_path
 
 
 def recomendacion_semanal_migration():
