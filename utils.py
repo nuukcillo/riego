@@ -31,6 +31,17 @@ def last_sunday():
     last_sunday = today - timedelta(days=(today.weekday() + 1) % 7)  # Domingo de la semana pasada
     return last_sunday
 
+def first_day_of_week():
+    """
+    Obtiene el primer día de la semana actual (lunes).
+
+    Returns:
+        datetime.date: Fecha del primer día de la semana actual.
+    """
+    today = date.today()
+    first_day = today - timedelta(days=today.weekday())  # Lunes de esta semana
+    return first_day
+
 def load_config(config_filename='config.json'):
     """Load the configuration file."""
     config_path = os.path.join(os.path.dirname(__file__), config_filename)

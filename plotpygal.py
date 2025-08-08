@@ -6,7 +6,7 @@ import random
 # Función para generar el gráfico de barras
 def plot_barchar_riego(xvalues, yvalues, partida):
     # Colores de los gráficos
-    colores = ['#563f46', '#80ced6', '#618685', '#36486b']
+    colores = ["#5c4249", '#80ced6', '#618685', '#36486b']
 
     # Estilo del gráfico
     estilo = Style(background='transparent',
