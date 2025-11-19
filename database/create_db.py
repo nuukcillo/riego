@@ -2,8 +2,11 @@ import argparse
 import sqlite3
 import os
 import json
-from models import Counter, User, WebScrapConfig
-#from database.migrations.rec_semanal import recomendacion_semanal_migration
+from models import Counter, User, WebScrapConfig  # Esto funciona si se ejecuta este script
+# from database.models import Counter, User, WebScrapConfig  # Esto funciona si se importa como módulo
+
+# from database.migrations.rec_semanal import recomendacion_semanal_migration
+
 
 def reset_database():
 
@@ -14,8 +17,10 @@ def reset_database():
     else:
         print("No se encontró ninguna base de datos existente para eliminar.")
 
+
 def get_db_path():
     return os.path.join(os.path.dirname(__file__), 'riego.db')
+
 
 def execute_sql_commands(commands):
     db_path = get_db_path()
@@ -25,6 +30,7 @@ def execute_sql_commands(commands):
         cursor.execute(command)
     conn.commit()
     conn.close()
+
 
 def create_database():
     commands = [
@@ -70,6 +76,7 @@ def create_database():
     ]
     execute_sql_commands(commands)
 
+
 def insert_data():
     db_path = get_db_path()
     conn = sqlite3.connect(db_path)
@@ -85,7 +92,7 @@ def insert_data():
         Counter('B', 'carretera', 'C000453', 3, 'Carretera'),
         Counter('B', 'c_villar', 'C000233', 20, 'Camino el Villar'),
         Counter('F', 'higuerica', 'C000141', 6, 'Higuerica'),
-        Counter('F', 'tarrosa', 'C000171', 7.7, 'Tarrosa'),
+        Counter('F', 'tarrosa', 'C000169', 7.7, 'Tarrosa'),
         Counter('F', 'panderon', 'C000329', 120, 'Panderón'),
         Counter('F', 'mojon', 'C000340', 29, 'Mojón'),
         Counter('F', 'lalosa', 'C000356', 5, 'La Losa'),
@@ -116,6 +123,7 @@ def insert_data():
 
     conn.commit()
     conn.close()
+
 
 def migrate_configjson(json_file='config.json'):
     """Migración directa sin dividir URLs"""
@@ -160,6 +168,7 @@ def migrate_configjson(json_file='config.json'):
         if conn:
             conn.close()
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Gestión de la base de datos de riego.")
     parser.add_argument(
@@ -178,13 +187,13 @@ if __name__ == "__main__":
     if args.accion == "init":
         create_database()
         insert_data()
-        #recomendacion_semanal_migration()
+        # recomendacion_semanal_migration()
         print("Base de datos inicializada.")
     elif args.accion == "reset_init":
         reset_database()
         create_database()
         insert_data()
-        #recomendacion_semanal_migration()
+        # recomendacion_semanal_migration()
         print("Base de datos reseteada e inicializada.")
     elif args.accion == "migrate_config":
         success = migrate_configjson(args.config)
