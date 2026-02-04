@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+  {% block content %}
+<div class="">
+    <div class="row center">
+        <h1>Totales de Riego </h1>
+    </div>
+    <div class="row center">
+
+
+  <!-- Métricas principales - 4 columnas -->
+    <div class="row">
+        <!-- Card 1: Consumo Hoy -->
+        <div class="col s12 m6 l3">
+            <div class="card teal lighten-5">
+                <div class="card-content">
+                    <span class="card-title">Hoy</span>
+                    
+                    <!-- Selector de fecha -->
+                    <input type="date" id="fecha-selector">
+
+                    <!-- Contenedor del consumo -->
+                    <div id="consumo-container">
+                        {{ consumo_hoy }}
+                    </div>
+                 </div>
+              </div>
+           
+        </div>
+
+        <!-- Card 2: Consumo Semana -->
+        <div class="col s12 m6 l3">
+            <div class="card light-blue lighten-5">
+                <div class="card-content">
+                    <span class="card-title">Semana</span>
+                    <input type="week" id="fecha-semanal-selector">
+                   <div id="consumo-semanal-container">
+                        {{ consumo_semana }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 3: Consumo Mes -->
+        <div class="col s12 m6 l3">
+            <div class="card indigo lighten-5">
+                <div class="card-content">
+                    <span class="card-title">Mes</span>
+                    <input type="month" id="fecha-mensual-selector">
+                   <div id="consumo-mensual-container">
+                        {{ consumo_mes }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 4: Alertas -->
+        <div class="col s12 m6 l3">
+            <div class="card deep-purple lighten-5">
+                <div class="card-content">
+                    <span class="card-title">Periodo</span>
+                    <div class="row">
+                            <div class="col s6">
+                                <div class="input-field">
+                                    <input type="date" id="fecha-inicio-periodo">
+                                    <label for="fecha-inicio-periodo">Fecha Inicio</label>
+                                </div>
+                            </div>
+                            <div class="col s6">
+                                <div class="input-field">
+                                    <input type="date" id="fecha-fin-periodo">
+                                    <label for="fecha-fin-periodo">Fecha Fin</label>
+                                </div>
+                            </div>
+                            <div id="consumo-periodo-container">
+                                {{ consumo_periodo }}
+                            </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
+  {% endblock %}

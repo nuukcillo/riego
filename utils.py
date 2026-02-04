@@ -3,7 +3,7 @@ import sys
 import os
 import logging
 import requests
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 
 def is_current_week(date_to_check):
     """
@@ -31,15 +31,34 @@ def last_sunday():
     last_sunday = today - timedelta(days=(today.weekday() + 1) % 7)  # Domingo de la semana pasada
     return last_sunday
 
-def first_day_of_week():
+def first_day_of_week(fecha=None):
     """
-    Obtiene el primer día de la semana actual (lunes).
+    Obtiene el primer día de la semana (lunes).
 
-    Returns:
-        datetime.date: Fecha del primer día de la semana actual.
+    Parámetros:
+        fecha (optional): `datetime.date`, `datetime.datetime` o string 'YYYY-MM-DD'.
+                          Si se omite, se usa la fecha de hoy.
+
+    Retorna:
+        datetime.date: Fecha del lunes de la semana correspondiente a `fecha`.
     """
-    today = date.today()
-    first_day = today - timedelta(days=today.weekday())  # Lunes de esta semana
+    if fecha is None:
+        today = date.today()
+    else:
+        # Aceptar date, datetime o string
+        if isinstance(fecha, datetime):
+            today = fecha.date()
+        elif isinstance(fecha, date):
+            today = fecha
+        elif isinstance(fecha, str):
+            try:
+                today = datetime.strptime(fecha, '%Y-%m-%d').date()
+            except ValueError:
+                raise ValueError("El string de 'fecha' debe tener el formato 'YYYY-MM-DD'")
+        else:
+            raise TypeError("El parámetro 'fecha' debe ser date, datetime o string 'YYYY-MM-DD'")
+
+    first_day = today - timedelta(days=today.weekday())  # Lunes de esa semana
     return first_day
 
 def load_config(config_filename='config.json'):
