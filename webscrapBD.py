@@ -8,7 +8,7 @@ from datetime import timedelta
 import requests
 from bs4 import BeautifulSoup
 
-from database.riego_repository import load_data, get_db_path
+from database.riego_repository import load_counters, load_users, load_config, get_db_path
 from telegramutils import enviar_avisos_riego_anormal, enviar_informe_riego_diario
 from utils import setup_logging, make_request
 
@@ -75,7 +75,7 @@ def main():
     TELEGRAM_TOKEN = os.environ['TELEGRAM_TOKEN']
     TELEGRAM_CHAT_ID = os.environ['TELEGRAM_CHAT_ID']
 
-    counters, users, configs = load_data()
+    counters, users, configs = load_counters(), load_users(), load_config()
 
     config_dict = {cfg.key: cfg.value for cfg in configs}
 

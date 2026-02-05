@@ -3,7 +3,7 @@ from flask import Flask, render_template, request, jsonify
 import time
 from flask_simplelogin import SimpleLogin, login_required
 
-from database.riego_repository import load_data, obtener_inicial
+from database.riego_repository import load_users, obtener_inicial
 import plotpygal
 import riegosemanal
 
@@ -19,10 +19,10 @@ SimpleLogin(app)
 @app.route("/index")
 @login_required
 def home():
-    _, usuarios = load_data()
+    usuarios = load_users()
 
-    nombre_usuarios = usuarios['name'].tolist()
-    id_usuarios = usuarios['user'].tolist()
+    nombre_usuarios = [u.name for u in usuarios]
+    id_usuarios = [u.user for u in usuarios]
     return render_template('index.html', users_name=nombre_usuarios, users_len=len(nombre_usuarios),
                            users_id=id_usuarios)
 
@@ -62,45 +62,26 @@ def gente(people):
 @login_required
 def riego():
     litros_semanales = riegosemanal.obtener_datos()
-    return render_template('riego.html', tabla=litros_semanales.to_html(classes="responsible-table striped",
-                                                                        index_names=False, index=True, justify='center'
-                                                                        ))
+    return render_template('riego.html', tabla=litros_semanales)
 @app.route('/dashboard')
 @login_required
 def dashboard():
     # Métricas clave
-    consumo_hoy = riegosemanal.obtener_consumo_dia(datetime.now()).to_html(classes="responsible-table striped",
-                                                                        index_names=False, index=True, justify='center'
-                                                                        )
+    consumo_hoy = riegosemanal.obtener_consumo_dia(datetime.now())
     
     # Obtener datos de los últimos 7 días agrupados por parcela
     fecha_fin = datetime.now()
     fecha_inicio = fecha_fin - timedelta(days=7)
     consumo_semana = riegosemanal.obtener_consumo_periodo(fecha_inicio, fecha_fin)
-    consumo_semana_html = consumo_semana.to_html(classes="responsible-table striped",
-                                                                        index_names=False, index=True, justify='center'
-                                                                        )
     consumo_mes = riegosemanal.obtener_consumo_mes()
-    
-    # Comparativa con recomendación
-    recomendacion = riegosemanal.leer_recomendacion_semanal()
-    desviacion = ((consumo_semana - recomendacion) / recomendacion) * 100
-    
-    # Gráficos de tendencias (últimos 30 días, trimestre, año)
-    tendencia_30d = riegosemanal.generar_grafico_tendencia(30)
-    tendencia_trimestre = riegosemanal.generar_grafico_tendencia(90)
-
-    # Alertas por desviación
-    alertas = riegosemanal.generar_alertas_desviacion(umbral=20)
+    consumo_periodo = riegosemanal.obtener_consumo_periodo(fecha_inicio=fecha_fin - timedelta(days=15), fecha_fin=date.today())
     
     return render_template('dashboard.html',
-                          consumo_hoy=consumo_hoy,
-                          consumo_semana=consumo_semana_html,
-                          consumo_mes=consumo_mes,
-                          desviacion=desviacion,
-                          tendencia_30d=tendencia_30d,
-                          tendencia_trimestre=tendencia_trimestre,
-                          alertas=alertas)
+                        consumo_hoy=consumo_hoy,
+                        consumo_semana=consumo_semana,
+                        consumo_mes=consumo_mes,
+                        consumo_periodo=consumo_periodo
+                    )
 
 @app.route('/api/consumo-dia')
 @login_required
@@ -117,7 +98,6 @@ def api_consumo_dia():
             return jsonify({'error': 'Formato de fecha inválido'}), 400
     
     df = riegosemanal.obtener_consumo_dia(fecha)
-    
     # Convertir a array de diccionarios con partida, fecha, valor
     datos = df[['partida', 'valor']].to_dict('records')
     

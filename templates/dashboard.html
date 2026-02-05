@@ -21,7 +21,7 @@
 
                     <!-- Contenedor del consumo -->
                     <div id="consumo-container">
-                        {{ consumo_hoy }}
+                        {% set consumo_data = consumo_hoy %}{% include '_consumo_table.html' %}
                     </div>
                  </div>
               </div>
@@ -35,7 +35,7 @@
                     <span class="card-title">Semana</span>
                     <input type="week" id="fecha-semanal-selector">
                    <div id="consumo-semanal-container">
-                        {{ consumo_semana }}
+                        {% set consumo_data = consumo_semana %}{% include '_consumo_table.html' %}
                     </div>
                 </div>
             </div>
@@ -48,7 +48,7 @@
                     <span class="card-title">Mes</span>
                     <input type="month" id="fecha-mensual-selector">
                    <div id="consumo-mensual-container">
-                        {{ consumo_mes }}
+                        {% set consumo_data = consumo_mes %}{% include '_consumo_table.html' %}
                     </div>
                 </div>
             </div>
@@ -73,7 +73,7 @@
                                 </div>
                             </div>
                             <div id="consumo-periodo-container">
-                                {{ consumo_periodo }}
+                                {% set consumo_data = consumo_periodo %}{% include '_consumo_table.html' %}
                             </div>
                     </div>
                 </div>

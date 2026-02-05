@@ -8,7 +8,6 @@ import datetime
 from datetime import datetime as dt
 from bs4 import BeautifulSoup
 import requests
-from database.riego_repository import load_data
 
 def load_config(config_filename='config.json'):
     """Load the configuration file."""
@@ -80,7 +79,7 @@ def main():
     BASE_URL = config['BASE_URL']
 
     # Load user and counters data from database
-    counters, users = load_data()
+    counters, users = load_counters(), load_users()
 
     current_month_year = dt.now().strftime('%m%Y')
     archive_date = (dt.now() - datetime.timedelta(days=dt.now().day)).strftime("%Y%m")

@@ -1,7 +1,7 @@
 import sqlite3
 import pandas as pd
 from datetime import datetime, timedelta
-from database.riego_repository import get_db_path, load_data, obtener_factor_recomendacion_semanal_hanegada, obtener_riegos_mes_recomendados
+from database.riego_repository import get_db_path, load_counters, obtener_factor_recomendacion_semanal_hanegada, obtener_riegos_mes_recomendados
 from utils import first_day_of_week
 
 def obtener_valores_riego(fecha=None,inicial=None, todos=False):
@@ -61,7 +61,7 @@ def obtener_recomendacion_semanal(counters, riego_semanal):
     return riego_semanal
 
 def obtener_datos():
-    counters, _ = load_data()
+    counters = load_counters()
     df = obtener_valores_riego()
     return obtener_recomendacion_semanal(counters, df)
 
@@ -87,7 +87,7 @@ def obtener_consumo_periodo(fecha_inicio, fecha_fin):
     query = "SELECT SUM(valor), partida FROM datos_riego WHERE fecha BETWEEN ? AND ? GROUP BY partida"
     result = pd.read_sql_query(query, conn, params=[inicio_str, fin_str])
     conn.close()
-    return result.iloc[0, 0] or 0
+    return result
 
 def generar_alertas_desviacion(umbral=20):
     # Implementar lógica de alertas por desviación

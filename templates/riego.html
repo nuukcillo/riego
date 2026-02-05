@@ -10,7 +10,7 @@
 
 
             <div class="col s12 m12 l12 ">
-              {{ tabla|safe }}
+              {% set consumo_data = tabla %}{% include '_consumo_table.html' %}
             </div>
     </div>
 </div>

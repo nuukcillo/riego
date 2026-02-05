@@ -12,18 +12,15 @@ def get_db_path():
     return os.path.join(os.path.dirname(__file__), 'riego.db')
 
 
-def load_data():
+def load_counters():
     """
-    Carga los datos de counters, users y config desde la base de datos.
-    Devuelve tres listas con objetos Counter, User y WebScrapConfig.
+    Carga los datos de counters desde la base de datos.
+    Devuelve una lista con objetos Counter.
     """
     db_path = get_db_path()
     with sqlite3.connect(db_path) as conn:
-        conn.row_factory = sqlite3.Row  # Permite acceder por nombre de columna
-
+        conn.row_factory = sqlite3.Row
         counters_rows = conn.execute("SELECT * FROM counters").fetchall()
-        users_rows = conn.execute("SELECT * FROM users").fetchall()
-        config_rows = conn.execute("SELECT * FROM config").fetchall()
 
     counters = [
         Counter(
@@ -35,6 +32,17 @@ def load_data():
         )
         for row in counters_rows
     ]
+    return counters
+
+def load_users():
+    """
+    Carga los datos de usuarios desde la base de datos.
+    Devuelve una lista con objetos User.
+    """
+    db_path = get_db_path()
+    with sqlite3.connect(db_path) as conn:
+        conn.row_factory = sqlite3.Row
+        users_rows = conn.execute("SELECT * FROM users").fetchall()
 
     users = [
         User(
@@ -45,6 +53,17 @@ def load_data():
         )
         for row in users_rows
     ]
+    return users
+
+def load_config():
+    """
+    Carga la configuración desde la base de datos.
+    Devuelve una lista con objetos WebScrapConfig.
+    """
+    db_path = get_db_path()
+    with sqlite3.connect(db_path) as conn:
+        conn.row_factory = sqlite3.Row
+        config_rows = conn.execute("SELECT * FROM config").fetchall()
 
     wsconfigs = [
         WebScrapConfig(
@@ -53,8 +72,7 @@ def load_data():
         )
         for row in config_rows
     ]
-
-    return counters, users, wsconfigs
+    return wsconfigs
 
 def obtener_inicial(usuario):
     """
@@ -94,4 +112,6 @@ def obtener_factor_recomendacion_semanal_hanegada():
     return float(row[0]) if row else 2.5
 
 if __name__ == '__main__':
-    load_data()
+    load_counters()
+    load_users()
+    load_config()
