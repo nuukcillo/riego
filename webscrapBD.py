@@ -52,6 +52,7 @@ def parse_and_save_to_db(html_content, partida, conn, parse_all=False):
 
     conn.commit()
 
+
 def main():
     """Main function to run the web scraping and data insertion"""
     parser = argparse.ArgumentParser(description="Web scraping script")
@@ -64,7 +65,6 @@ def main():
     args = parser.parse_args()
 
     month_year = args.month_year
-
 
     setup_logging()
     logging.info("Inicio del script")
@@ -110,6 +110,7 @@ def main():
     enviar_avisos_riego_anormal(TELEGRAM_TOKEN, TELEGRAM_CHAT_ID)
     conn.close()
     logging.info("Script terminado correctamente")
+
 
 if __name__ == '__main__':
     main()

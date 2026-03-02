@@ -1,27 +1,31 @@
 # Riego
 
-Aplicación que hace webscrap para conseguir datos que luego se muestran en gráficas.
+Aplicación para monitorizar y analizar datos de riego mediante web scraping, almacenamiento en base de datos y notificaciones automáticas.
 
 ## Estructura del Proyecto
 
 ### Archivos Principales
 
 - `webscrapU.py`: Script principal que realiza el web scraping y guarda los datos en archivos CSV.
-- `riegosemanal.py`: Script que procesa los datos de riego semanal desde los archivos CSV y la base de datos.
+- `webscrapBD.py`: Script que realiza el scraping y guarda los datos directamente en la base de datos SQLite.
+- `riegosemanal.py`: Procesa los datos de riego semanal desde la base de datos y genera informes.
+- `avisosriego.py`: Detecta riegos anormalmente altos y genera avisos.
+- `telegramutils.py`: Funciones para enviar mensajes y avisos a Telegram.
 - `create_db.py`: Script para crear y poblar la base de datos SQLite con datos iniciales.
 - `delete_csv_files.ps1`: Script de PowerShell para eliminar archivos CSV.
 - `run_webscrapU.sh`: Script de shell para ejecutar `webscrapU.py` en sistemas Linux.
 
 ### Directorios
 
-- `database/`: Contiene scripts relacionados con la base de datos.
+- `database/`: Scripts y archivos relacionados con la base de datos.
   - `create_db.py`: Script para crear y poblar la base de datos SQLite.
-  - `database.db`: Archivo de la base de datos SQLite.
+  - `riego.db`: Archivo de la base de datos SQLite.
 - `csv_files/`: Directorio donde se almacenan los archivos CSV generados por `webscrapU.py`.
 
 ### Archivos de Configuración
 
-- `config.json`: Archivo de configuración que contiene URLs y otros parámetros necesarios para el web scraping.
+- `config.json`: Archivo de configuración con URLs y parámetros para el scraping.
+- `.github/workflows/python-app.yml`: Workflow de GitHub Actions para ejecución automática y actualización de la base de datos.
 
 ## Instalación
 
@@ -51,20 +55,19 @@ Aplicación que hace webscrap para conseguir datos que luego se muestran en grá
 
 ### Ejecutar el Web Scraping
 
-Para ejecutar el script de web scraping y guardar los datos en archivos CSV:
+Para guardar los datos en archivos CSV:
 ```sh
 python webscrapU.py
 ```
 
-Para ejecutar el script que guarde los datos en base de datos ejecutar lo siguiente:
+Para guardar los datos directamente en la base de datos:
 ```sh
 python webscrapBD.py [--parse_all] [--month_year MMYYYY]
 ```
 
-Donde:
-
-*   `--parse_all`: (Opcional) Si se incluye, analiza todas las filas de la tabla HTML en lugar de solo la última fila. Por defecto, solo se analiza la última fila.
-*   `--month_year MMYYYY`: (Opcional) Especifica el mes y el año para extraer los datos. El formato debe ser `MMYYYY` (ejemplo: `042024` para Abril de 2024`). Si no se especifica, se utiliza el mes y año actual.
+**Argumentos:**
+- `--parse_all`: (Opcional) Si se incluye, analiza todas las filas de la tabla HTML en lugar de solo la última fila. Por defecto, solo se analiza la última fila.
+- `--month_year MMYYYY`: (Opcional) Especifica el mes y el año para extraer los datos. El formato debe ser `MMYYYY` (ejemplo: `042024` para Abril de 2024). Si no se especifica, se utiliza el mes y año actual.
 
 Ejemplo para analizar todos los datos de Mayo de 2023:
 ```sh
@@ -77,6 +80,17 @@ Para procesar los datos de riego semanal y generar un informe:
 ```sh
 python riegosemanal.py
 ```
+
+### Detectar Riegos Anormales
+
+Para detectar riegos anormalmente altos comparando el riego de hoy con la media de la última semana:
+```sh
+python avisosriego.py
+```
+
+### Envío de Avisos y Reportes a Telegram
+
+El sistema envía automáticamente reportes diarios y avisos de riego anormal al canal de Telegram configurado en `config.json` o mediante variables de entorno `TELEGRAM_TOKEN` y `TELEGRAM_CHAT_ID`.
 
 ### Eliminar Archivos CSV
 
@@ -99,13 +113,19 @@ Para ejecutar la aplicación en un contenedor Docker:
     docker run -d --name riego_container riego
     ```
 
-## Programación de Tareas
+## Automatización y CI/CD
 
-### Windows
+### GitHub Actions
+
+El workflow `.github/workflows/python-app.yml` permite ejecutar el scraping y actualizar la base de datos automáticamente. Al finalizar el scraping, los cambios en la base de datos se hacen commit y push al repositorio.
+
+### Programación de Tareas
+
+#### Windows
 
 Para programar la ejecución diaria del script `webscrapU.py` a las 00:05 en Windows, usa el Programador de Tareas.
 
-### Linux
+#### Linux
 
 Para programar la ejecución diaria del script `webscrapU.py` a las 00:05 en Linux, usa `cron`:
 ```sh

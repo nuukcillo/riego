@@ -31,7 +31,7 @@ def enviar_informe_riego_diario(telegram_token, telegram_chat_id, conn):
         """, (f"{fecha_str}%",))
         resultados = cursor.fetchall()
 
-        if not resultados:
+        if not resultados or all(valor == 0 for _, valor in resultados):
             mensaje = f"📅 {fecha_str}\n💧 No se registró riego en ninguna partida."
         else:
             # Encabezado del mensaje
@@ -77,7 +77,7 @@ def enviar_informe_recomendacion_semanal(telegram_token, telegram_chat_id, conn)
         SELECT d.partida, COUNT(*) as num_riegos, SUM(d.valor) as total_riego, c.hanegadas
         FROM datos_riego d
         JOIN counters c ON d.partida = c.partida
-        WHERE d.fecha BETWEEN ? AND ?
+        WHERE d.fecha BETWEEN ? AND ? AND d.valor > 0
         GROUP BY d.partida
     """, (fecha_inicio.strftime("%Y-%m-%d"), fecha_fin.strftime("%Y-%m-%d")))
 
