@@ -1,25 +1,32 @@
- <nav class="blue-grey darken-4" role="navigation">
-    <div class="nav-wrapper container"><a id="logo-container" href="/" class="brand-logo">Inicio</a>
-      <ul class="right hide-on-med-and-down">
+{% if is_logged_in() %}
+<nav class="blue-grey darken-4" role="navigation">
+  <div class="nav-wrapper container">
 
-          {% if is_logged_in() %}
-              <li><a href="#">Bienvenido, {{get_username()}}</a></li>
-              <li><a href="/logout">Salir</a></li>
-          {% else %}
-            <li><a href="/login">Acceder</a></li>
-          {% endif %}
-      </ul>
+    <!-- Navegación -->
+    <ul class="left hide-on-med-and-down">
+      <li><a href="/">Inicio</a></li>
+      <li><a href="/riegosemanal">Riego semanal</a></li>
+    </ul>
 
-      <ul id="nav-mobile" class="sidenav">
-          <li><a href="/index">Inicio</a></li>
-          {% if is_logged_in() %}
-              <li><a href="#">{{get_username()}}</a></li>
-              <li><a href="/logout">Salir</a></li>
-          {% else %}
-            <li><a href="/login">Acceder</a></li>
-          {% endif %}
+    <!-- Usuario -->
+    <ul class="right hide-on-med-and-down user-nav">
+      <li class="user-name">{{ get_username() }}</li>
+      <li><a href="/logout" class="logout">Salir</a></li>
+    </ul>
 
-      </ul>
-      <a href="#" data-target="nav-mobile" class="sidenav-trigger"><i class="material-icons">Menu</i></a>
-    </div>
-  </nav>
+    <!-- Mobile -->
+    <ul id="nav-mobile" class="sidenav">
+      <li><a href="/">Inicio</a></li>
+      <li><a href="/riegosemanal">Riego semanal</a></li>
+      <li class="divider"></li>
+      <li class="subheader">{{ get_username() }}</li>
+      <li><a href="/logout">Salir</a></li>
+    </ul>
+
+    <a href="#" data-target="nav-mobile" class="sidenav-trigger">
+      <i class="material-icons">menu</i>
+    </a>
+
+  </div>
+</nav>
+{% endif %}

@@ -74,18 +74,6 @@ def load_config():
     ]
     return wsconfigs
 
-def obtener_inicial(usuario):
-    """
-    Devuelve la inicial asociada a un usuario, o None si no existe.
-    """
-    db_path = get_db_path()
-    with sqlite3.connect(db_path) as conn:
-        row = conn.execute(
-            "SELECT inicial FROM users WHERE user = ?",
-            (usuario,)
-        ).fetchone()
-    return row[0] if row else None
-
 def obtener_riegos_mes_recomendados(fecha):
     """
     Obtiene el número de riegos recomendados por mes.
@@ -94,7 +82,7 @@ def obtener_riegos_mes_recomendados(fecha):
     db_path = get_db_path()
     with sqlite3.connect(db_path) as conn:
         row = conn.execute(
-            "SELECT riegos_por_mes FROM recomendacion_semanal WHERE mes = ?",
+            "SELECT riegos_por_semana FROM recomendacion_semanal WHERE mes = ?",
             (fecha.month,)
         ).fetchone()
     return int(row[0]) if row else 0

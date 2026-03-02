@@ -6,3 +6,16 @@
  main {
      flex: 1 0 auto;
  }
+
+ .login-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+}
+
+@media (max-height: 600px) {
+  .login-wrapper {
+    align-items: flex-start;
+    padding-top: 40px;
+  }
+}

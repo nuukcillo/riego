@@ -1,6 +1,6 @@
 import sqlite3
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import timedelta
 from database.riego_repository import get_db_path, load_counters, obtener_factor_recomendacion_semanal_hanegada, obtener_riegos_mes_recomendados
 from utils import first_day_of_week
 
@@ -48,13 +48,11 @@ def obtener_recomendacion_semanal(counters, riego_semanal):
     # Initialize recommendation column
     riego_semanal['Recomendacion Semanal'] = 0.0
 
+    print(counters, riego_semanal)
     # Vectorized assignment for 'Recomendacion Semanal'
-    hanegadas = counters.set_index('nombre_completo')['hanegadas']
 
     for parcela in riego_semanal.index:
-        if parcela in hanegadas.index:
-            riego_semanal.at[parcela, 'Recomendacion Semanal'] = hanegadas.loc[parcela] * recomendacion_semanal
-
+        riego_semanal.at[parcela, 'Recomendacion Semanal'] = counters[parcela].hanegadas * recomendacion_semanal
     # Calculate the remaining weekly irrigation
     riego_semanal['Restante Semanal'] = riego_semanal['Recomendacion Semanal'] - riego_semanal['Riego Semanal']
 
@@ -62,8 +60,9 @@ def obtener_recomendacion_semanal(counters, riego_semanal):
 
 def obtener_datos():
     counters = load_counters()
+    counters_dict = {c.partida: c for c in counters}
     df = obtener_valores_riego()
-    return obtener_recomendacion_semanal(counters, df)
+    return obtener_recomendacion_semanal(counters_dict, df)
 
 def obtener_consumo_dia(fecha):
     db_path = get_db_path()
@@ -74,17 +73,12 @@ def obtener_consumo_dia(fecha):
     conn.close()
     return result
 
-def obtener_consumo_mes():
-    hoy = datetime.now()
-    inicio = hoy.replace(day=1)
-    return obtener_consumo_periodo(inicio, hoy)
-
 def obtener_consumo_periodo(fecha_inicio, fecha_fin):
     db_path = get_db_path()
     conn = sqlite3.connect(db_path)
-    inicio_str = fecha_inicio.strftime('%Y-%m-%d 00:00:00')
-    fin_str = fecha_fin.strftime('%Y-%m-%d 23:59:59')
-    query = "SELECT SUM(valor), partida FROM datos_riego WHERE fecha BETWEEN ? AND ? GROUP BY partida"
+    inicio_str = fecha_inicio.strftime('%Y-%m-%d')
+    fin_str = fecha_fin.strftime('%Y-%m-%d')
+    query = "SELECT SUM(valor) as valor, partida FROM datos_riego WHERE DATE(fecha) BETWEEN ? AND ? GROUP BY partida"
     result = pd.read_sql_query(query, conn, params=[inicio_str, fin_str])
     conn.close()
     return result

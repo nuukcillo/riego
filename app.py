@@ -1,10 +1,6 @@
 from datetime import datetime, date, timedelta
 from flask import Flask, render_template, request, jsonify
-import time
 from flask_simplelogin import SimpleLogin, login_required
-
-from database.riego_repository import load_users, obtener_inicial
-import plotpygal
 import riegosemanal
 
 from config import Config
@@ -14,56 +10,13 @@ app = Flask(__name__)
 app.config.from_object(Config)
 SimpleLogin(app)
 
-
-@app.route("/")
-@app.route("/index")
-@login_required
-def home():
-    usuarios = load_users()
-
-    nombre_usuarios = [u.name for u in usuarios]
-    id_usuarios = [u.user for u in usuarios]
-    return render_template('index.html', users_name=nombre_usuarios, users_len=len(nombre_usuarios),
-                           users_id=id_usuarios)
-
-
-@app.route('/gente/<people>')
-@login_required
-def gente(people):
-    parcelas_ret = []  # Lista que guardará los nombres de los archivos SVG de cada parcela
-   
-    inicial = obtener_inicial(people)
-    df = riegosemanal.obtener_valores_riego(inicial=inicial, todos=True).iloc[:, -7:]
-
-    # Dibujar gráficos para cada parcela
-    for parcela in df.index:
-        # Filtrar los datos para cada parcela
-        parcela_data = df.loc[parcela]
-        
-        # Generar el gráfico para la parcela
-        plotpygal.plot_barchar_riego(parcela_data.index.tolist(), parcela_data.tolist(), parcela)
-
-        # Añadir el nombre del archivo SVG generado a la lista
-        parcelas_ret.append(f"{parcela}.svg")
-
-    # Pasar los nombres de los archivos SVG y el número de parcelas a la plantilla
-    return render_template('bar.html', parcelas=parcelas_ret, num_parcelas=len(parcelas_ret), cache=str(time.time()))
-
-
-
-# @app.route("/bar")
-# def bar():
-#     plotpygal.main()
-#     img_url = 'static/images/c_villar.svg?cache=' + str(time.time())
-#     return render_template('bar.html', image_url=img_url)
-#
-
 @app.route('/riegosemanal')
 @login_required
 def riego():
     litros_semanales = riegosemanal.obtener_datos()
     return render_template('riego.html', tabla=litros_semanales)
-@app.route('/dashboard')
+
+@app.route('/')
 @login_required
 def dashboard():
     # Métricas clave
@@ -73,7 +26,7 @@ def dashboard():
     fecha_fin = datetime.now()
     fecha_inicio = fecha_fin - timedelta(days=7)
     consumo_semana = riegosemanal.obtener_consumo_periodo(fecha_inicio, fecha_fin)
-    consumo_mes = riegosemanal.obtener_consumo_mes()
+    consumo_mes = riegosemanal.obtener_consumo_periodo(fecha_inicio=fecha_fin - timedelta(days=30), fecha_fin=fecha_fin)
     consumo_periodo = riegosemanal.obtener_consumo_periodo(fecha_inicio=fecha_fin - timedelta(days=15), fecha_fin=date.today())
     
     return render_template('dashboard.html',
@@ -130,9 +83,12 @@ def api_consumo_semanal():
     except Exception:
         return jsonify({'error': 'Formato de fecha inválido. Use YYYY-Www o YYYY-MM-DD'}), 400
 
+    print(fecha_str, inicio, fin)  # Debug: verificar fechas calculadas
     # Obtener datos de riego de la semana y sumar por parcela
     df = riegosemanal.obtener_consumo_periodo(fecha_inicio=inicio, fecha_fin=fin).to_dict('records')    
     
+    print(df)  # Debug: verificar datos obtenidos antes de enviar respuesta
+
     return jsonify({
         'datos': df,
         'inicio': inicio.strftime('%Y-%m-%d'),
@@ -152,20 +108,18 @@ def api_consumo_mensual():
             year, month = map(int, fecha_str.split('-'))
         
         inicio = date(year, month, 1)
+        primera_proximo_mes = (inicio.replace(day=1) + timedelta(days=32)).replace(day=1)
+        fin = primera_proximo_mes - timedelta(days=1)# fecha segura para el siguiente mes
        
     except Exception:
         return jsonify({'error': 'Formato de fecha inválido. Use YYYY-MM'}), 400
 
-    # Obtener datos de riego del mes y sumar por parcela
-    df = riegosemanal.obtener_consumo_mes(fecha=inicio)
-    consumo_mensual = df.groupby('partida')['valor'].sum().reset_index()
-    consumo_mensual.columns = ['partida', 'valor']
-    
-    datos = consumo_mensual.to_dict('records')
+    df = riegosemanal.obtener_consumo_periodo(fecha_inicio=inicio, fecha_fin=fin).to_dict('records')
     
     return jsonify({
-        'datos': datos,
+        'datos': df,
         'inicio': inicio.strftime('%Y-%m-%d'),
+        'fin': fin.strftime('%Y-%m-%d')
     })
 
 @app.route('/api/consumo-periodo')
@@ -196,4 +150,4 @@ def api_consumo_periodo():
     })
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)

@@ -30,7 +30,7 @@ const Dashboard = (() => {
     const init = () => {
         cacheElements();
         bindEvents();
-        setCurrentDate();
+        setSelectorsDate();
     };
 
     /**
@@ -54,17 +54,17 @@ const Dashboard = (() => {
     const bindEvents = () => {
         if (elements.fechaSelector) {
             elements.fechaSelector.addEventListener('change', (event) => 
-                handleDateChange(event, config.apiEndpoint)
+                handleDateChange(event, config.apiEndpoint, elements.consumoContainer)
             );
         }
         if (elements.fechaSemanalSelector) {
             elements.fechaSemanalSelector.addEventListener('change', (event) => 
-                handleDateChange(event, config.apiEndpointSemanal)
+                handleDateChange(event, config.apiEndpointSemanal, elements.consumoSemanalContainer)
             );
         }
         if (elements.fechaMensualSelector) {
             elements.fechaMensualSelector.addEventListener('change', (event) => 
-                handleDateChange(event, config.apiEndpointMensual)
+                handleDateChange(event, config.apiEndpointMensual, elements.consumoMensualContainer)
             );
         }
         if (elements.fechaInicioPeriodoSelector && elements.fechaFinPeriodoSelector) {
@@ -76,30 +76,50 @@ const Dashboard = (() => {
             );
         }
     };
-
+    const numeroDeSemana = fecha => {
+        const DIA_EN_MILISEGUNDOS = 1000 * 60 * 60 * 24,
+            DIAS_QUE_TIENE_UNA_SEMANA = 7,
+            JUEVES = 4;
+        fecha = new Date(Date.UTC(fecha.getFullYear(), fecha.getMonth(), fecha.getDate()));
+        let diaDeLaSemana = fecha.getUTCDay(); // Domingo es 0, sábado es 6
+        if (diaDeLaSemana === 0) {
+            diaDeLaSemana = 7;
+        }
+        fecha.setUTCDate(fecha.getUTCDate() - diaDeLaSemana + JUEVES);
+        const inicioDelAño = new Date(Date.UTC(fecha.getUTCFullYear(), 0, 1));
+        const diferenciaDeFechasEnMilisegundos = fecha - inicioDelAño;
+        return Math.ceil(((diferenciaDeFechasEnMilisegundos / DIA_EN_MILISEGUNDOS) + 1) / DIAS_QUE_TIENE_UNA_SEMANA);
+    };
     /**
      * Establece la fecha actual en el input
      */
-    const setCurrentDate = () => {
+    const setSelectorsDate = () => {
         if (!elements.fechaSelector) return;
 
         const hoy = new Date();
         const año = hoy.getFullYear();
         const mes = String(hoy.getMonth() + 1).padStart(2, '0');
         const dia = String(hoy.getDate()).padStart(2, '0');
+        const hoyMenos15Dias = new Date(new Date(hoy).setDate(hoy.getDate() - 15));
+        const numeroDeSemanaActual = numeroDeSemana(hoy);
+        console.log(typeof numeroDeSemanaActual, numeroDeSemanaActual);
         
         elements.fechaSelector.value = `${año}-${mes}-${dia}`;
+        elements.fechaSemanalSelector.value = `${año}-W${String(numeroDeSemanaActual).padStart(2, '0')}`;
+        elements.fechaMensualSelector.value = `${año}-${mes}`;
+        elements.fechaInicioPeriodoSelector.value = `${hoyMenos15Dias.getFullYear()}-${String(hoyMenos15Dias.getMonth() + 1).padStart(2, '0')}-${String(hoyMenos15Dias.getDate()).padStart(2, '0')}`;
+        elements.fechaFinPeriodoSelector.value = `${año}-${mes}-${dia}`;
     };
 
     /**
      * Maneja el cambio de fecha
      */
-    const handleDateChange = (event, apiEndpoint = config.apiEndpoint) => {
+    const handleDateChange = (event, apiEndpoint = config.apiEndpoint, container = elements.consumoContainer) => {
         const fechaSeleccionada = event.target.value;
         
         if (!fechaSeleccionada) return;
         
-        fetchConsumo(fechaSeleccionada, apiEndpoint);
+        fetchConsumo(fechaSeleccionada, apiEndpoint, container);
     };
 
     const handlePeriodoChange = (event, apiEndpoint = config.apiEndpointPeriodo) => {
@@ -108,14 +128,14 @@ const Dashboard = (() => {
 
         if (!fechaInicio || !fechaFin) return;
 
-        fetchConsumoPeriodo(fechaInicio, fechaFin, apiEndpoint);
+        fetchConsumoPeriodo(fechaInicio, fechaFin, apiEndpoint, elements.consumoPeriodoContainer);
     };
 
     /**
      * Obtiene el consumo de la API para un periodo
      */
-    const fetchConsumoPeriodo = (fechaInicio, fechaFin, apiEndpoint) => {
-        showLoading();
+    const fetchConsumoPeriodo = (fechaInicio, fechaFin, apiEndpoint, container) => {
+        showLoading(container);
 
         fetch(`${apiEndpoint}?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`)
             .then(response => {
@@ -125,19 +145,19 @@ const Dashboard = (() => {
                 return response.json();  // Cambiar a JSON
             })
             .then(data => {
-                renderConsumo(data);  // Pasar el objeto JSON
+                renderConsumo(data, container);  // Pasar el objeto JSON
             })
             .catch(error => {
                 console.error('Error:', error);
-                showError();
+                showError(container);
             });
     };
 
     /**
      * Renderiza el consumo de periodo en el DOM
      */
-    const fetchConsumo = (fecha, apiEndpoint) => {
-        showLoading();
+    const fetchConsumo = (fecha, apiEndpoint, container) => {
+        showLoading(container);
 
         fetch(`${apiEndpoint}?fecha=${fecha}`)
             .then(response => {
@@ -147,37 +167,37 @@ const Dashboard = (() => {
                 return response.json();  // Cambiar a JSON
             })
             .then(data => {
-                renderConsumo(data);  // Pasar el objeto JSON
+                renderConsumo(data, container);  // Pasar el objeto JSON
             })
             .catch(error => {
                 console.error('Error:', error);
-                showError();
+                showError(container);
             });
     };
 
     /**
      * Muestra el estado de carga
      */
-    const showLoading = () => {
-        if (elements.consumoContainer) {
-            elements.consumoContainer.innerHTML =   `<div class="progress"><div class="indeterminate"></div></div>`;
+    const showLoading = (container = elements.consumoContainer) => {
+        if (container) {
+            container.innerHTML =   `<div class="progress"><div class="indeterminate"></div></div>`;
         }
     };
 
     /**
      * Muestra un mensaje de error
      */
-    const showError = () => {
-        if (elements.consumoContainer) {
-            elements.consumoContainer.innerHTML = '<p class="red-text">Error al cargar datos</p>';
+    const showError = (container = elements.consumoContainer) => {
+        if (container) {
+            container.innerHTML = '<p class="red-text">Error al cargar datos</p>';
         }
     };
 
     /**
      * Renderiza el consumo en el DOM
      */
-    const renderConsumo = (data) => {
-        if (!elements.consumoContainer) return;
+    const renderConsumo = (data, container = elements.consumoContainer) => {
+        if (!container) return;
         
         // Construir las filas de la tabla
         let filas = '';
@@ -208,7 +228,7 @@ const Dashboard = (() => {
             </table>
         `;
         
-        elements.consumoContainer.innerHTML = html;
+        container.innerHTML = html;
     };
         // API pública
     return {

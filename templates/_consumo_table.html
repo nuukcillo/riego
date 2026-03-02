@@ -1,1 +1,16 @@
-{{ consumo_data.to_html(classes="responsible-table striped", index_names=False, index=True, justify='center') | safe }}
+<table class="responsible-table striped">
+    <thead>
+        <tr>
+            <th>Partida</th>
+            <th>Valor</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in consumo_data %}
+            <tr>
+                <td>{{ row.partida }}</td>
+                <td>{{ row.valor }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
