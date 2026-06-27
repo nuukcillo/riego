@@ -157,7 +157,7 @@ def migrate_configjson(json_file='config.json'):
         
         conn.commit()
         
-        print(f"Migración exitosa! Backup")
+        print("Migración exitosa! Backup")
 
         return True
         
